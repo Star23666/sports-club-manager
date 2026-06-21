@@ -1,0 +1,40 @@
+{
+  "name": "must-badminton-system",
+  "version": "1.0.5",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.5.1",
+    "axios": "^1.7.3",
+    "core-js": "^3.8.3",
+    "js-cookie": "^3.0.5",
+    "qrcode": "^1.5.4",
+    "qrcode-reader": "^1.0.4",
+    "sass": "^1.77.8",
+    "sass-loader": "^16.0.0",
+    "vant": "^4.9.4",
+    "vue": "^3.2.13",
+    "vue-puzzle-vcode": "^1.1.10",
+    "vue-qr": "^4.0.9",
+    "vue-qrcode": "^2.2.2",
+    "vue-router": "^4.0.3",
+    "vue3-puzzle-vcode": "^1.1.7",
+    "vue3-qr-reader": "^1.0.0",
+    "vuex": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}

@@ -1,0 +1,121 @@
+\section{系统概述}
+
+本章从技术和结构层面对羽毛球活动管理系统进行说明，覆盖系统整体架构、主要模块组件、已实现的核心功能以及关键部件交互方式。系统采用双前端（管理端与用户端）+ Python 后端 + MySQL 数据库的分层方案，面向成员（Member）、工作人员（Staff）和管理员（Admin）三类角色提供统一服务。
+
+\subsection{整体架构}
+
+系统总体为前后端分离架构，核心链路为：前端页面发起 HTTP 请求，后端 FastAPI 路由处理业务逻辑，数据库持久化核心数据，找回密码场景通过 SMTP 邮件服务完成验证码下发。
+
+\begin{itemize}
+  \item 表现层：\textbf{Client Front-end}（成员端/工作人员端）与 \textbf{Admin Front-end}（后台管理端）。
+  \item 服务层：\textbf{FastAPI Backend}，统一管理用户认证、活动管理、候补、转移、审核、找回密码等接口。
+  \item 数据层：\textbf{MySQL}，存储 users、actions、records、waiting、tokens 等业务表。
+  \item 外部服务：\textbf{SMTP Email Service}，用于验证码邮件发送。
+\end{itemize}
+
+架构对应代码入口如下：
+\begin{itemize}
+  \item 后端入口：\texttt{python/app/main.py}（挂载 user/action/waiting/transfer/staff/find/admin\_user/admin\_member/admin\_action 路由）。
+  \item 管理端路由：\texttt{admin-front-end/src/router/index.js}。
+  \item 用户端路由：\texttt{client-front-end/src/router/index.js}。
+\end{itemize}
+
+图示建议：
+\begin{itemize}
+  \item 图2-1 系统上下文图：\texttt{docs/uml\_part2\_134/1\_context.mmd}
+  \item 图2-2 系统结构图：\texttt{docs/uml\_part2\_134/3\_structural.mmd}
+\end{itemize}
+
+\subsection{主要模块与组件}
+
+\subsubsection{后端模块（Python/FastAPI）}
+
+后端采用按业务域拆分的路由模块设计，核心模块如下：
+\begin{itemize}
+  \item \textbf{用户与认证模块}（\texttt{api/user.py}）：登录、设备登录、Token 校验、修改密码、注册、设备绑定与登出。
+  \item \textbf{活动模块}（\texttt{api/action.py}）：活动查询、报名、取消报名、记录查询、微信群信息查询。
+  \item \textbf{候补模块}（\texttt{api/waiting.py}）：活动满员后进入候补队列并维护顺位。
+  \item \textbf{转移模块}（\texttt{api/transfer.py}）：活动名额转移与接收。
+  \item \textbf{找回模块}（\texttt{api/find.py}）：找回用户名、发送重置邮件、验证码校验与重置密码。
+  \item \textbf{管理员模块}（\texttt{api/admin\_member.py}、\texttt{api/admin\_user.py}、\texttt{api/admin\_action.py}）：成员审核、状态管理、活动管理、后台统计。
+  \item \textbf{基础设施模块}（\texttt{db.py}、\texttt{response.py}、\texttt{settings.py}、\texttt{email\_service.py}）：事务与 SQL 封装、统一响应结构、配置与邮件服务。
+\end{itemize}
+
+\subsubsection{前端模块（Vue）}
+
+\begin{itemize}
+  \item \textbf{管理员端}（Admin Front-end）：
+  用户审核（UserReviewList）、用户管理（UserList）、活动管理（ActionCreate/ActionList）、记录管理（RecordsList/WorkRecordsList）、首页统计（Inbox）。
+  \item \textbf{用户端}（Client Front-end）：
+  账号功能（登录/注册/找回/重置）、成员功能（活动浏览报名、个人信息、历史记录）、工作人员功能（扫码签到、工作视图）。
+\end{itemize}
+
+\subsection{系统主要功能}
+
+系统当前已实现三条核心业务链路。
+
+\subsubsection{活动全流程管理}
+
+\begin{enumerate}
+  \item 管理员创建并发布活动。
+  \item 成员查询开放活动并发起报名（可选借拍）。
+  \item 活动满员后，后续报名进入候补队列。
+  \item 工作人员在活动现场执行签到核验。
+  \item 活动结束后沉淀参与记录，用于统计与信用计算。
+\end{enumerate}
+
+关键实现依据：\texttt{api/action.py}（报名/取消/记录），\texttt{api/waiting.py}（候补），\texttt{api/staff.py}（签到）。
+
+\subsubsection{账号与权限管理}
+
+\begin{enumerate}
+  \item 用户注册后默认状态为待审核。
+  \item 管理员审核通过后用户可正常登录并获得 token。
+  \item 后续接口通过 token 与角色状态进行权限校验。
+  \item 管理员可执行封禁、解封、清空失信次数、重置密码等管理操作。
+\end{enumerate}
+
+关键实现依据：\texttt{api/user.py}、\texttt{api/admin\_member.py}、\texttt{api/common.py}。
+
+\subsubsection{找回密码流程}
+
+\begin{enumerate}
+  \item 用户提交身份信息触发验证码邮件发送。
+  \item 后端验证身份后生成验证码并写入有效期。
+  \item 用户提交验证码和新密码。
+  \item 后端校验验证码有效性后完成密码更新并删除验证码记录。
+\end{enumerate}
+
+关键实现依据：\texttt{api/find.py}、\texttt{email\_service.py}。
+
+\subsection{关键部件交互}
+
+\subsubsection{交互链路一：找回密码}
+
+该链路涉及用户端页面、找回接口、数据库与邮件服务四方协作。主要异常分支包括：账号信息不匹配、验证码仍在限流窗口、邮件发送失败、验证码过期。
+
+图示建议：图2-3 关键交互时序图（\texttt{docs/uml\_part2\_134/2\_interaction.mmd}）。
+
+\subsubsection{交互链路二：报名与候补切换}
+
+成员报名时，系统先判断活动状态与已有报名记录：
+\begin{itemize}
+  \item 若活动可报名且未满员，写入 records 并返回成功。
+  \item 若活动满员，写入 waiting 并分配候补顺位。
+  \item 若已报名或已在候补，返回重复报名提示。
+  \item 取消报名时若存在候补，系统将首位候补提升为正式记录并更新队列。
+\end{itemize}
+
+该流程体现了系统在容量约束场景下的业务一致性控制，是本项目的关键业务特征之一。
+
+\subsection{本章小结}
+
+本章完成了系统概述所需的四项内容：
+\begin{itemize}
+  \item 明确了系统整体架构和技术分层；
+  \item 梳理了前后端主要模块与职责边界；
+  \item 总结了当前已实现的核心功能链路；
+  \item 说明了关键部件在典型业务流程中的交互方式。
+\end{itemize}
+
+在后续章节中，可继续基于本章结构补充性能指标、测试数据与部署细节，实现从“结构可解释”到“工程可验证”的完整论证。

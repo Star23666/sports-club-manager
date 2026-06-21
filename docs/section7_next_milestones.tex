@@ -1,0 +1,49 @@
+\begin{enumerate}
+  \item \textbf{M1: Integration Wrap-up and Defect Convergence (Week 1)}
+  Complete full business-flow regression, fix high-priority defects, and ensure the core pipeline of reservation--check-in--statistics export is stable and available.
+
+  \item \textbf{M2: Performance and Security Hardening (Week 1)}
+  Validate concurrency and response-time targets, finalize authorization checks and password/token security policies, and produce reproducible test evidence.
+
+  \item \textbf{M3: Deployment and Documentation Finalization (Week 2)}
+  Finalize Docker deployment standards, operation guides, user manual, and test report to ensure the project is reproducible and transferable.
+
+  \item \textbf{M4: Acceptance Demo and Final Delivery (Week 2)}
+  Complete defense materials, demo script, and release freeze for the final version, submit all deliverables, and prepare for Q\&A.
+\end{enumerate}
+
+\subsection{Task Assignment (Equal Workload)}
+
+\noindent\textbf{Assignment Principle:} Workload is balanced across 4 members. Each member leads 2 key tasks and also participates in cross-testing and peer review.
+
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{|p{6.8cm}|p{3.2cm}|p{4.2cm}|}
+\hline
+\textbf{Task Description} & \textbf{Owner} & \textbf{Timeline / Target Milestone} \\
+\hline
+Full API regression testing (member side + admin side), add exception-flow test cases, and fix interface compatibility issues & Huzixi (1230002465) & Week 1 (M1) \\
+\hline
+Verify correctness of check-in/activity statistics and align export report fields with business definitions & Huzixi (1230002465) & Week 1 (M1--M2) \\
+\hline
+Optimize front-end interactions (registration, cancellation, check-in feedback), and standardize error and empty-state display & Limingda (1230016031) & Week 1 (M1) \\
+\hline
+Refine acceptance-demo pages and user operation paths, and produce the first draft of the demo script & Limingda (1230016031) & Week 1 (M3) \\
+\hline
+Run concurrent reservation/check-in stress tests and optimize database performance to meet response and concurrency targets & Liangzhiyuan (1230016101) & Week 2 (M2) \\
+\hline
+Validate Docker-based release environment (front-end + back-end + MySQL), and improve one-command startup and troubleshooting guides & Liangzhiyuan (1230016101) & Week 2 (M3) \\
+\hline
+Security hardening: review password policy, token expiry, and authorization boundaries, and produce a security checklist & Huangzhengdong (1230014123) & Week 2 (M2) \\
+\hline
+Integrate deliverables (requirements document, test report, user manual, defense slides) and submit the final release package & Huangzhengdong (1230014123) & Week 2 (M4) \\
+\hline
+\end{tabular}
+
+\subsection{Expected Deliverable Status by Milestone}
+
+\begin{itemize}
+  \item End of M1: No blockers in core workflows; P1/P2 defects are largely resolved.
+  \item End of M2: Performance targets (page response and export latency) are met, with security review completed.
+  \item End of M3: Deployment guide, test report, and user manual are complete; the system can be reproduced independently by others.
+  \item End of M4: Final defense and full delivery are completed, and the project enters course acceptance status.
+\end{itemize}

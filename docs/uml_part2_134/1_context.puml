@@ -1,0 +1,45 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam rectangle {
+  BorderColor #2F3A4A
+}
+left to right direction
+
+title Diagram 1 - Context Model (System Boundary)
+
+actor Member as member
+actor Staff as staff
+actor Admin as admin
+cloud "Email Service\n(SMTP)" as email
+
+rectangle "Badminton Activity Management System" as sys {
+  rectangle "Client Front-end\n(Vue)" as client
+  rectangle "Admin Front-end\n(Vue)" as adminfe
+  rectangle "Python Backend\n(FastAPI)" as backend
+  database "MySQL Database" as db
+}
+
+member --> client : register/login\nfind account\nreset password\njoin activities
+staff --> client : scan sign code\nstart/stop sign
+admin --> adminfe : review users\nmanage activities
+
+client --> backend : REST API calls
+adminfe --> backend : REST API calls
+backend --> db : SQL query/transaction
+backend --> email : send reset email
+
+note bottom of backend
+Main entry: python/app/main.py
+Routers: python/app/api/*.py
+end note
+
+note bottom of db
+Schema: database/install.sql
+Core tables: users, actions,
+records, waiting, verifycode
+end note
+
+@enduml

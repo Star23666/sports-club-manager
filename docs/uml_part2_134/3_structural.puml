@@ -1,0 +1,80 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+skinparam componentStyle rectangle
+left to right direction
+
+title Diagram 3 - Structural Model (Component View)
+
+package "Admin Front-end" {
+  [admin src/main.js] as admin_main
+  [admin src/router/index.js] as admin_router
+  [admin views/*.vue] as admin_views
+  [admin store/index.js] as admin_store
+}
+
+package "Client Front-end" {
+  [client src/main.js] as client_main
+  [client src/router/index.js] as client_router
+  [client views/*.vue] as client_views
+  [client components/QrScanner.vue] as qr
+  [client store/index.js] as client_store
+}
+
+package "Python Backend" {
+  [app/main.py] as be_main
+  [api/find.py] as api_find
+  [api/staff.py] as api_staff
+  [api/admin_member.py] as api_admin_member
+  [api/user.py action.py waiting.py transfer.py] as api_other
+  [db.py] as be_db
+  [email_service.py] as be_mail
+  [response.py + utils.py] as be_util
+}
+
+database "MySQL\ninstall.sql" as mysql
+cloud "SMTP Mail Server" as smtp
+
+admin_main --> admin_router
+admin_router --> admin_views
+admin_views --> admin_store
+admin_views --> be_main : HTTP
+
+client_main --> client_router
+client_router --> client_views
+client_views --> client_store
+client_views --> qr
+client_views --> be_main : HTTP
+
+be_main --> api_find
+be_main --> api_staff
+be_main --> api_admin_member
+be_main --> api_other
+
+api_find --> be_db
+api_staff --> be_db
+api_admin_member --> be_db
+api_other --> be_db
+
+api_find --> be_mail
+be_db --> mysql
+be_mail --> smtp
+api_find --> be_util
+api_staff --> be_util
+api_admin_member --> be_util
+
+note right of api_find
+Reset password APIs:
+/api/find/sendResetEmail
+/api/find/resetPassword
+end note
+
+note right of api_staff
+Sign workflow APIs:
+/api/staff/startSign
+/api/staff/finishSign
+/api/staff/stopAction
+end note
+
+@enduml

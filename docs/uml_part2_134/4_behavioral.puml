@@ -1,0 +1,56 @@
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam shadowing false
+
+title Diagram 4 - Behavioral Model (Activity: Reset Password)
+
+start
+:User opens ResetPassword page;
+:Input username + real name + student id;
+if (Input valid?) then (yes)
+  :Frontend calls\nPOST /api/find/sendResetEmail;
+  :Backend verifies user info;
+  if (User exists and info match?) then (yes)
+    if (Need campus email?) then (yes)
+      :Use student_id@student.must.edu.mo;
+    else (no)
+      :Use registered email;
+    endif
+    :Generate verify code;
+    :Insert verifycode(user_id, code, out_time);
+    :Send email via email_service;
+    if (Email send success?) then (yes)
+      :Go to step 2 (reset form);
+      :Input verify code + new password + confirm password;
+      if (Password rule valid and confirm match?) then (yes)
+        :Frontend calls\nPOST /api/find/resetPassword;
+        :Backend loads verifycode by code;
+        if (Code exists and not expired?) then (yes)
+          :Update users.password (MD5);
+          :Delete verifycode;
+          :Return success;
+          stop
+        else (no)
+          :Return time exceeded / not found;
+          :Back to step 1 and resend email;
+          stop
+        endif
+      else (no)
+        :Show password format or mismatch error;
+        stop
+      endif
+    else (no)
+      :Return Email Error;
+      stop
+    endif
+  else (no)
+    :Return Not Found;
+    stop
+  endif
+else (no)
+  :Frontend blocks submit and shows validation message;
+  stop
+endif
+
+@enduml

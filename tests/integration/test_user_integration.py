@@ -1,0 +1,140 @@
+from contextlib import contextmanager
+from datetime import datetime, timedelta
+
+import pytest
+from sqlalchemy import create_engine
+
+from app import db as db_module
+from app import main as app_main
+from app.utils import encrypt_md5
+
+
+@pytest.fixture
+def integration_client(tmp_path, monkeypatch):
+    db_file = tmp_path / "integration.sqlite3"
+    engine = create_engine(f"sqlite:///{db_file}")
+
+    with engine.begin() as conn:
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password TEXT NOT NULL,
+                name TEXT,
+                card_id TEXT,
+                phone TEXT,
+                state INTEGER,
+                wechat_id TEXT,
+                student_id TEXT,
+                email TEXT
+            )
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token TEXT NOT NULL,
+                out_time TEXT
+            )
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE equipment (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                equip_id TEXT,
+                user_id INTEGER
+            )
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE user_view (
+                ID INTEGER PRIMARY KEY,
+                username TEXT,
+                state INTEGER,
+                phone TEXT,
+                email TEXT,
+                wechat_id TEXT,
+                student_id TEXT,
+                name TEXT
+            )
+            """
+        )
+
+    monkeypatch.setattr(db_module, "engine", engine)
+
+    from fastapi.testclient import TestClient
+
+    return TestClient(app_main.app)
+
+
+def test_register_duplicate_then_reject(integration_client):
+    params = {
+        "username": "u100",
+        "password": "Aa1$aaaa",
+        "name": "N",
+        "card_id": "C",
+        "phone": "P",
+        "wechat_id": "W",
+        "student_id": "S",
+        "email": "u100@example.com",
+    }
+
+    r1 = integration_client.post("/api/user/register", params=params)
+    assert r1.status_code == 200
+    assert r1.json()["status"] == 0
+
+    r2 = integration_client.post("/api/user/register", params=params)
+    assert r2.status_code == 200
+    assert r2.json()["status"] == -1
+
+
+def test_verify_with_valid_token(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("member01", encrypt_md5("Aa1$aaaa"), 2),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username=?", ("member01",)).scalar_one()
+
+        conn.exec_driver_sql(
+            "insert into user_view(ID, username, state, phone, email, wechat_id, student_id, name)"
+            " values (?, ?, ?, ?, ?, ?, ?, ?)",
+            (user_id, "member01", 2, "138", "m@example.com", "wx", "sid", "Member"),
+        )
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, "tok-ok", None),
+        )
+
+    r = integration_client.post("/api/user/verify", params={"token": "tok-ok"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"] == 1
+    assert body["data"]["username"] == "member01"
+
+
+def test_logout_removes_token(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("logout-user", encrypt_md5("Aa1$aaaa"), 2),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username=?", ("logout-user",)).scalar_one()
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, "tok-logout", (datetime.now() + timedelta(hours=1)).isoformat()),
+        )
+
+    r = integration_client.post("/api/user/logout", params={"token": "tok-logout"})
+    assert r.status_code == 200
+    assert r.json() == 0
+
+    with db_module.engine.begin() as conn:
+        remaining = conn.exec_driver_sql("select count(*) from tokens where token=?", ("tok-logout",)).scalar_one()
+    assert remaining == 0

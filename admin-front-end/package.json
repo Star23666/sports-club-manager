@@ -1,0 +1,36 @@
+{
+  "name": "must-badminton-admin-end",
+  "version": "1.0.5",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build"
+  },
+  "dependencies": {
+    "@layui/layui-vue": "^2.18.3",
+    "axios": "^1.7.5",
+    "core-js": "^3.8.3",
+    "js-cookie": "^3.0.5",
+    "jsqr": "^1.4.0",
+    "nprogress": "^0.2.0",
+    "sass-loader": "^16.0.1",
+    "vue": "^3.2.13",
+    "vue-router": "^4.0.3",
+    "vue3-puzzle-vcode": "^1.1.7",
+    "vuex": "^4.0.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-router": "~5.0.0",
+    "@vue/cli-plugin-vuex": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "less": "^4.2.0",
+    "less-loader": "^12.2.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
