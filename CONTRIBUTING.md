@@ -6,7 +6,7 @@ Thanks for considering contributing! This is an open-source sports club manageme
 
 ```bash
 # 1. Fork & clone
-git clone https://github.com/YOUR_USERNAME/sports-club-manager.git
+git clone https://github.com/JosephHu04/sports-club-manager.git
 cd sports-club-manager
 
 # 2. Start backend (zero-config)

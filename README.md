@@ -2,14 +2,19 @@
 
 <p align="center">
   <b>Open Source Member & Event Management System<br>开源会员与活动管理系统</b><br><br>
-  <img src="https://img.shields.io/badge/python-3.10+-blue.svg?style=flat-square" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/fastapi-0.115-green.svg?style=flat-square" alt="FastAPI">
-  <img src="https://img.shields.io/badge/vue-3.x-brightgreen.svg?style=flat-square" alt="Vue 3">
-  <img src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square" alt="MIT">
-  <img src="https://img.shields.io/badge/status-active-success.svg?style=flat-square" alt="Active">
+  <a href="https://github.com/JosephHu04/sports-club-manager/stargazers"><img src="https://img.shields.io/github/stars/JosephHu04/sports-club-manager?style=for-the-badge&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/JosephHu04/sports-club-manager/network/members"><img src="https://img.shields.io/github/forks/JosephHu04/sports-club-manager?style=for-the-badge&color=blue" alt="Forks"></a>
+  <a href="https://github.com/JosephHu04/sports-club-manager/issues"><img src="https://img.shields.io/github/issues/JosephHu04/sports-club-manager?style=for-the-badge&color=red" alt="Issues"></a>
+  <a href="https://github.com/JosephHu04/sports-club-manager/blob/main/LICENSE"><img src="https://img.shields.io/github/license/JosephHu04/sports-club-manager?style=for-the-badge" alt="License"></a>
   <br>
-  <img src="https://img.shields.io/badge/database-SQLite_|_MySQL-orange.svg?style=flat-square" alt="SQLite / MySQL">
-  <img src="https://img.shields.io/badge/deploy-Docker_|_Bare_Metal-informational.svg?style=flat-square" alt="Docker / Bare Metal">
+  <img src="https://img.shields.io/badge/python-3.10+-3776AB.svg?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/fastapi-0.115-009688.svg?style=flat-square&logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/vue-3.x-4FC08D.svg?style=flat-square&logo=vue.js&logoColor=white" alt="Vue 3">
+  <img src="https://img.shields.io/badge/license-MIT-yellow.svg?style=flat-square" alt="MIT">
+  <br>
+  <img src="https://img.shields.io/badge/database-SQLite_|_MySQL-4479A1.svg?style=flat-square&logo=mysql&logoColor=white" alt="SQLite / MySQL">
+  <img src="https://img.shields.io/badge/deploy-Docker_|_Bare_Metal-2496ED.svg?style=flat-square&logo=docker&logoColor=white" alt="Docker / Bare Metal">
+  <img src="https://img.shields.io/badge/testing-pytest-0A9EDC.svg?style=flat-square&logo=pytest&logoColor=white" alt="pytest">
 </p>
 
 <p align="center">
@@ -34,6 +39,7 @@
 - [Tech Stack / 技术栈](#-tech-stack--技术栈)
 - [Testing / 测试](#-testing--测试)
 - [Security / 安全](#-security--安全)
+- [Roadmap / 路线图](#-roadmap--路线图)
 - [Contributing / 贡献](#-contributing--贡献)
 
 ---
@@ -116,7 +122,7 @@ Suggested shots / 建议截图：
 
 ```bash
 # Clone / 克隆
-git clone https://github.com/YOUR_USERNAME/sports-club-manager.git
+git clone https://github.com/JosephHu04/sports-club-manager.git
 cd sports-club-manager
 
 # Windows
@@ -283,20 +289,42 @@ Tests cover token verification, login, registration, password validation, utilit
 
 ---
 
+## 🗺️ Roadmap / 路线图
+
+- [ ] 🌐 i18n / Internationalization / 国际化（英文界面）
+- [ ] 🔐 bcrypt/argon2 password migration / 密码哈希迁移
+- [ ] 🔑 JWT authentication with refresh tokens / JWT 认证
+- [ ] 📊 Advanced statistics & charts dashboard / 高级统计图表看板
+- [ ] 📱 PWA support / PWA 移动端支持
+- [ ] 🔔 WebSocket real-time waitlist notifications / WebSocket 实时候补通知
+- [ ] 📧 Email notification system / 邮件通知系统
+- [ ] 🧪 Frontend e2e tests (Playwright/Cypress) / 前端端到端测试
+- [ ] 🐳 One-click Docker deployment to cloud / 一键云部署
+
+---
+
 ## 🤝 Contributing / 贡献
 
 Pull requests welcome! See [`CONTRIBUTING.md`](CONTRIBUTING.md).  
 欢迎提交 PR！详见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 
-Good first issues / 适合新手的任务:
-- 🌐 i18n / English UI translation / 英文界面翻译
-- 🔐 bcrypt password migration / bcrypt 密码迁移
-- 📊 Statistics & charts dashboard / 数据统计图表
-- 📱 PWA support / PWA 移动端支持
+### Contributors / 贡献者
+
+<a href="https://github.com/JosephHu04/sports-club-manager/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=JosephHu04/sports-club-manager" alt="Contributors" />
+</a>
 
 ---
 
 ## ⭐ Star History / 星标历史
+
+<a href="https://star-history.com/#JosephHu04/sports-club-manager&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=JosephHu04/sports-club-manager&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=JosephHu04/sports-club-manager&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=JosephHu04/sports-club-manager&type=Date" />
+  </picture>
+</a>
 
 If this helps you, give it a ⭐ — it helps others find it!  
 如果对你有帮助，点个 ⭐ 让更多人看到！
