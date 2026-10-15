@@ -17,9 +17,9 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app.db import engine, tx, exec_one, fetch_one
-from app.utils import encrypt_md5
+from app.passwords import hash_password
 
-PWD = encrypt_md5("Aa1$abcd")  # default demo password
+PWD = hash_password("Aa1$abcd")  # disposable local demo password
 
 DEMO_USERS = [
     # (username, name, student_id, state, role)
@@ -107,7 +107,7 @@ def main():
             print(f"  +OK   action '{a['title']}' ({a['date']})")
 
     print(f"\nDone. Demo password for all users: Aa1$abcd")
-    print("Admin login: admin / admin")
+    print("Create an administrator separately: python -m app.bootstrap_admin")
     print("Start the backend to explore: http://localhost:8081/docs")
 
 

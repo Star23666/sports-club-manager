@@ -15,6 +15,8 @@ bash start.sh
 
 → Backend starts at <http://localhost:8081/docs> with **SQLite** (no MySQL needed).
 
+Before opening the admin UI, run `cd python && python -m app.bootstrap_admin` and enter a new password at the prompt. Never pass it as a command-line argument. Existing installations with the old public admin password must run the same command to rotate it.
+
 ## Manual Setup
 
 ```bash
@@ -35,10 +37,12 @@ See `.env.example` for all options. Key settings:
 | `ORG_NAME` | `My Sports Club` | Used in emails |
 | `MEMBER_ID_LABEL` | `Student ID` | Label for the member ID field |
 | `EMAIL_DOMAIN` | (empty) | Domain for auto-generated student emails |
+| `CORS_ORIGINS` | Local client/admin URLs | Comma-separated, exact allowed frontend origins |
 
 ## API Style
 - Most endpoints: `POST` + QueryString params → `{ "status": int, "data": ... }`
 - Token auth: `UUID token + tokens table + out_time`
+- Passwords: Argon2id for new/changed passwords; legacy MD5 is upgraded after correct login. Do not expose this API publicly until password/token query parameters are removed.
 
 ## Docker
 

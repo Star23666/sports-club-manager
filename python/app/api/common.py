@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.engine import Connection
 
 from ..db import exec_one, fetch_one, sql_binary
-from ..utils import encrypt_md5, new_token
+from ..passwords import verify_user_password
+from ..utils import new_token
 
 
 def token_verify_member(conn: Connection, token: str) -> tuple[int, dict | None]:
@@ -60,11 +61,10 @@ def token_verify_admin(conn: Connection, token: str) -> tuple[int, dict | None]:
 
 
 def login_common(conn: Connection, username: str, password: str, *, admin: bool) -> tuple[int, str | None]:
-    password_md5 = encrypt_md5(password)
     user = fetch_one(conn, f"select * from users where {sql_binary('username')}=:username", {"username": username})
     if not user:
         return -2, None
-    if user.get("password") != password_md5:
+    if not verify_user_password(conn, user, password):
         return -2, None
 
     state = int(user.get("state") or 0)

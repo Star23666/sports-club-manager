@@ -4,7 +4,8 @@ from fastapi import APIRouter, Query
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
-from ..utils import PASSWORD_PATTERN, encrypt_md5
+from ..passwords import hash_password
+from ..utils import PASSWORD_PATTERN
 from .common import token_verify_admin
 
 router = APIRouter(prefix="/admin/api/member", tags=["admin-member"])
@@ -195,7 +196,7 @@ def update_user_password(token: str = Query(""), user_id: int = Query(...), pass
         if not user:
             return vo(0, "User Not Exist")
 
-        exec_one(conn, "update users set password=:pwd where ID=:id", {"pwd": encrypt_md5(password), "id": user_id})
+        exec_one(conn, "update users set password=:pwd where ID=:id", {"pwd": hash_password(password), "id": user_id})
         return vo(1, "Successfully")
 
 

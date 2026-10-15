@@ -4,7 +4,8 @@ from fastapi import APIRouter, Query
 
 from ..db import exec_one, fetch_one, tx
 from ..response import vo
-from ..utils import PASSWORD_PATTERN, encrypt_md5
+from ..passwords import hash_password, verify_user_password
+from ..utils import PASSWORD_PATTERN
 from .common import login_common, token_verify_admin
 
 router = APIRouter(prefix="/admin/api/user", tags=["admin-user"])
@@ -34,13 +35,11 @@ def change_password(token: str = Query(""), origin_pass: str = Query(""), new_pa
         if status <= 0 or not user_view:
             return vo(status, "Token or Account Error.")
 
-        origin_md5 = encrypt_md5(origin_pass)
-        new_md5 = encrypt_md5(new_pass)
-        correct = fetch_one(conn, "select password from users where ID=:uid", {"uid": user_view["id"]})
-        if not correct or correct.get("password") != origin_md5:
+        correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
+        if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
 
-        rc = exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": new_md5, "uid": user_view["id"]})
+        rc = exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": hash_password(new_pass), "uid": user_view["id"]})
         if rc > 0:
             return vo(3, "Successful!")
         return vo(2, "Database Error!")
@@ -59,9 +58,8 @@ def contact(
         if status <= 0 or not user_view:
             return vo(status, "Token or Account Error.")
 
-        origin_md5 = encrypt_md5(origin_pass)
-        correct = fetch_one(conn, "select password from users where ID=:uid", {"uid": user_view["id"]})
-        if not correct or correct.get("password") != origin_md5:
+        correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
+        if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
 
         rc = exec_one(

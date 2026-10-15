@@ -72,7 +72,7 @@ def test_login_common_admin_success(monkeypatch):
 
     monkeypatch.setattr(common, "fetch_one", fake_fetch_one)
     monkeypatch.setattr(common, "exec_one", fake_exec_one)
-    monkeypatch.setattr(common, "encrypt_md5", lambda _s: "ENC")
+    monkeypatch.setattr(common, "verify_user_password", lambda *_args: True)
     monkeypatch.setattr(common, "new_token", lambda: "tok-admin")
 
     status, token = common.login_common(DummyConn(), "admin", "pwd", admin=True)
@@ -83,7 +83,7 @@ def test_login_common_admin_success(monkeypatch):
 
 def test_login_common_member_wrong_password(monkeypatch):
     monkeypatch.setattr(common, "fetch_one", lambda *_args, **_kwargs: {"id": 1, "password": "A", "state": 1})
-    monkeypatch.setattr(common, "encrypt_md5", lambda _s: "B")
+    monkeypatch.setattr(common, "verify_user_password", lambda *_args: False)
 
     status, token = common.login_common(DummyConn(), "u", "bad", admin=False)
     assert status == -2

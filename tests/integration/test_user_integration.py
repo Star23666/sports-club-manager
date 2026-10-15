@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from app import db as db_module
 from app import main as app_main
 from app.utils import encrypt_md5
+from app.passwords import LEGACY_DEFAULT_ADMIN_HASH
 
 
 @pytest.fixture
@@ -88,6 +89,9 @@ def test_register_duplicate_then_reject(integration_client):
     r1 = integration_client.post("/api/user/register", params=params)
     assert r1.status_code == 200
     assert r1.json()["status"] == 0
+    with db_module.engine.begin() as conn:
+        stored = conn.exec_driver_sql("select password from users where username='u100'").scalar_one()
+    assert stored.startswith("$argon2id$")
 
     r2 = integration_client.post("/api/user/register", params=params)
     assert r2.status_code == 200
@@ -117,6 +121,36 @@ def test_verify_with_valid_token(integration_client):
     body = r.json()
     assert body["status"] == 1
     assert body["data"]["username"] == "member01"
+
+
+def test_legacy_member_login_upgrades_password(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("old-member", encrypt_md5("Aa1$oldpass"), 2),
+        )
+
+    response = integration_client.post(
+        "/api/user/login", params={"username": "old-member", "password": "Aa1$oldpass"}
+    )
+    assert response.json()["status"] == 2
+    assert response.json()["data"]
+    with db_module.engine.begin() as conn:
+        stored = conn.exec_driver_sql("select password from users where username='old-member'").scalar_one()
+    assert stored.startswith("$argon2id$")
+
+
+def test_public_legacy_admin_password_is_rejected(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("admin", LEGACY_DEFAULT_ADMIN_HASH, 4),
+        )
+
+    response = integration_client.post(
+        "/admin/api/user/login", params={"username": "admin", "password": "admin"}
+    )
+    assert response.json()["status"] == -2
 
 
 def test_logout_removes_token(integration_client):

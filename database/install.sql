@@ -225,7 +225,7 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `ID` int NOT NULL AUTO_INCREMENT,
   `username` varchar(100) DEFAULT NULL,
-  `password` varchar(100) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
   `name` varchar(100) DEFAULT NULL,
   `card_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
   `phone` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
@@ -245,7 +245,6 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin','e16a0b342f7858669d605b120684254c','Administrator','admin','+8618888888888',4,'admin','admin@example.com','admin',0);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
