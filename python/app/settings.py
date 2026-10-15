@@ -15,12 +15,12 @@ class Settings(BaseSettings):
     email_domain: str = Field(default="", validation_alias="EMAIL_DOMAIN")  # e.g. "student.university.edu"
 
     # ── Database ────────────────────────────────────────
-    db_type: str = Field(default="mysql", validation_alias="DB_TYPE")
+    db_type: str = Field(default="sqlite", validation_alias="DB_TYPE")
     db_host: str = Field(default="127.0.0.1", validation_alias="DB_HOST")
     db_port: int = Field(default=3306, validation_alias="DB_PORT")
     db_name: str = Field(default="badminton1", validation_alias="DB_NAME")
     db_user: str = Field(default="root", validation_alias="DB_USER")
-    db_password: str = Field(default="123456", validation_alias="DB_PASSWORD")
+    db_password: str = Field(default="", validation_alias="DB_PASSWORD")
 
     # ── SMTP (optional) ─────────────────────────────────
     smtp_host: str | None = Field(default=None, validation_alias="SMTP_HOST")
@@ -31,6 +31,14 @@ class Settings(BaseSettings):
 
     # ── Server ──────────────────────────────────────────
     port: int = Field(default=8081, validation_alias="PORT")
+    cors_origins: str = Field(
+        default="http://localhost:8080,http://localhost:8082,http://127.0.0.1:8080,http://127.0.0.1:8082",
+        validation_alias="CORS_ORIGINS",
+    )
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
     def is_sqlite(self) -> bool:

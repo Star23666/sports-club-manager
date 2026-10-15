@@ -7,14 +7,12 @@
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
     environment:
-      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       MYSQL_DATABASE: badminton1
       TZ: Asia/Shanghai
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/install.sql:/docker-entrypoint-initdb.d/01-install.sql:ro
-    ports:
-      - "3306:3306"
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 5s
@@ -23,17 +21,17 @@
     restart: unless-stopped
 
   backend:
-    image: gsghb/python-backend:latest
     build:
       context: ./python
       dockerfile: Dockerfile
     container_name: must-badminton-py-backend
     environment:
       DB_HOST: mysql
+      DB_TYPE: mysql
       DB_PORT: 3306
       DB_NAME: badminton1
       DB_USER: root
-      DB_PASSWORD: 123456
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
       PORT: 8081
       TZ: Asia/Shanghai
     depends_on:
@@ -44,7 +42,6 @@
     restart: unless-stopped
 
   client:
-    image: gsghb/client-frontend:latest
     build:
       context: ./client-front-end
       dockerfile: Dockerfile
@@ -56,7 +53,6 @@
     restart: unless-stopped
 
   admin:
-    image: gsghb/admin-frontend:latest
     build:
       context: ./admin-front-end
       dockerfile: Dockerfile
