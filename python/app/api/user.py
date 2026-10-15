@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, Query
 
 from ..db import exec_one, fetch_all, fetch_one, sql_binary, tx
+from ..passwords import hash_password, verify_user_password
 from ..response import vo
 from ..utils import PASSWORD_PATTERN, encrypt_md5, mask_equip_id, new_token
 from .common import token_verify_member
@@ -18,7 +19,7 @@ def login(username: str = Query(""), password: str = Query("")):
         user = fetch_one(conn, f"select * from users where {sql_binary('username')}=:username", {"username": username})
         if not user:
             return vo(-2)
-        if user.get("password") != encrypt_md5(password):
+        if not verify_user_password(conn, user, password):
             return vo(-2)
 
         state = int(user.get("state") or 0)
@@ -82,13 +83,11 @@ def change_password(
         if status <= 0 or not user_view:
             return vo(status, "Token or Account Error.")
 
-        origin_md5 = encrypt_md5(origin_pass)
-        new_md5 = encrypt_md5(new_pass)
-        correct = fetch_one(conn, "select password from users where ID=:uid", {"uid": user_view["id"]})
-        if not correct or correct.get("password") != origin_md5:
+        correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
+        if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
 
-        rc = exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": new_md5, "uid": user_view["id"]})
+        rc = exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": hash_password(new_pass), "uid": user_view["id"]})
         if rc > 0:
             return vo(3, "Successful!")
         return vo(2, "Database Error!")
@@ -132,7 +131,7 @@ def new_equipment(
         if not user:
             return vo(-2, "Login Error")
 
-        if user.get("password") != encrypt_md5(password):
+        if not verify_user_password(conn, user, password):
             return vo(-2, "Login Error")
 
         equip_md5 = encrypt_md5(equip_id)
@@ -180,12 +179,11 @@ def contact(
 ):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
-        origin_md5 = encrypt_md5(origin_pass)
         if status <= 0 or not user_view:
             return vo(status, "Token or Account Error.")
 
-        correct = fetch_one(conn, "select password from users where ID=:uid", {"uid": user_view["id"]})
-        if not correct or correct.get("password") != origin_md5:
+        correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
+        if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
 
         rc = exec_one(
@@ -228,14 +226,14 @@ def register(
         if exists:
             return vo(-1, "The currently registered username already exists, please change it and try again\n")
 
-        pwd_md5 = encrypt_md5(password)
+        password_hash = hash_password(password)
         exec_one(
             conn,
             "insert into users(username, password, name, card_id, phone, state, wechat_id, student_id, email)"
             " values (:username, :password, :name, :card_id, :phone, :state, :wechat_id, :student_id, :email)",
             {
                 "username": username,
-                "password": pwd_md5,
+                "password": password_hash,
                 "name": name,
                 "card_id": card_id,
                 "phone": phone,
@@ -246,8 +244,3 @@ def register(
             },
         )
         return vo(0, "Your account has been registered. Please wait for the review to be passed before use.")
-
-
-@router.get("/e")
-def jiami(p: str = Query("")):
-    return encrypt_md5(p)

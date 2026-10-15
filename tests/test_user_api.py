@@ -33,7 +33,7 @@ def test_user_login_success(client, monkeypatch):
 
     monkeypatch.setattr(user_api, "fetch_one", fake_fetch_one)
     monkeypatch.setattr(user_api, "exec_one", lambda *_args, **_kwargs: called.__setitem__("exec", called["exec"] + 1) or 1)
-    monkeypatch.setattr(user_api, "encrypt_md5", lambda _s: "ENC")
+    monkeypatch.setattr(user_api, "verify_user_password", lambda *_args: True)
     monkeypatch.setattr(user_api, "new_token", lambda: "tok-user")
 
     r = client.post("/api/user/login", params={"username": "u1", "password": "p1"})

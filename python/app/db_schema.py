@@ -189,10 +189,4 @@ SCHEMA_DDL = [
     JOIN users u ON u.id = w.user_id
     """,
 
-    # ── Seed data ───────────────────────────────────────────
-    # Password = MD5(salted "admin") — matches Java backend hash
-    """
-    INSERT OR IGNORE INTO users (id, username, password, name, card_id, phone, state, wechat_id, email, student_id, unsigned_num)
-    VALUES (1, 'admin', 'e16a0b342f7858669d605b120684254c', 'Admin', 'admin', '+8618888888888', 4, 'admin', 'admin@example.com', 'admin', 0)
-    """,
 ]

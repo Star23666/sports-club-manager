@@ -9,7 +9,8 @@ from ..db import exec_one, fetch_one, tx
 from ..email_service import send_reset_email
 from ..response import vo
 from ..settings import settings
-from ..utils import EMAIL_PATTERN, PASSWORD_PATTERN, encrypt_md5
+from ..passwords import hash_password
+from ..utils import EMAIL_PATTERN, PASSWORD_PATTERN
 
 router = APIRouter(prefix="/api/find", tags=["find"])
 
@@ -97,6 +98,5 @@ def reset_password(code: str = Query(""), password: str = Query("")):
         if vc.get("out_time") and datetime.now() > vc["out_time"]:
             return vo(-1, "Time Exceed")
 
-        pwd_md5 = encrypt_md5(password)
-        exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": pwd_md5, "uid": user["id"]})
+        exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": hash_password(password), "uid": user["id"]})
         return vo(0, "Successfully!")
