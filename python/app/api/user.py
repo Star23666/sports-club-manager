@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, sql_binary, tx
 from ..passwords import hash_password, verify_user_password
@@ -14,7 +16,7 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 
 
 @router.post("/login")
-def login(username: str = Query(""), password: str = Query("")):
+def login(username: str = Query(""), password: str = Body("", embed=True)):
     with tx() as conn:
         user = fetch_one(conn, f"select * from users where {sql_binary('username')}=:username", {"username": username})
         if not user:
@@ -63,7 +65,7 @@ def login_by_equip(equip_id: str = Query("")):
 
 
 @router.post("/verify")
-def verify(token: str = Query("")):
+def verify(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
         return vo(status, user_view)
@@ -71,9 +73,9 @@ def verify(token: str = Query("")):
 
 @router.post("/password")
 def change_password(
-    token: str = Query(""),
-    origin_pass: str = Query(""),
-    new_pass: str = Query(""),
+    token: str = Depends(bearer_token),
+    origin_pass: str = Body("", embed=True),
+    new_pass: str = Body("", embed=True),
 ):
     if not PASSWORD_PATTERN.match(new_pass):
         return vo(-2, "Password Invalid!")
@@ -94,7 +96,7 @@ def change_password(
 
 
 @router.post("/queryEquips")
-def query_equips(token: str = Query(""), local: str = Query("")):
+def query_equips(token: str = Depends(bearer_token), local: str = Query("")):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
         if status <= 0 or not user_view:
@@ -117,10 +119,10 @@ def query_equips(token: str = Query(""), local: str = Query("")):
 
 @router.post("/newEquipment")
 def new_equipment(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     equip_id: str = Query(""),
     name: str = Query(""),
-    password: str = Query(""),
+    password: str = Body("", embed=True),
 ):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
@@ -152,7 +154,7 @@ def new_equipment(
 
 
 @router.post("/deleteEquipment")
-def delete_equipment(token: str = Query(""), id: int = Query(...)):
+def delete_equipment(token: str = Depends(bearer_token), id: int = Query(...)):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
         if status <= 0 or not user_view:
@@ -171,8 +173,8 @@ def delete_equipment(token: str = Query(""), id: int = Query(...)):
 
 @router.post("/contact")
 def contact(
-    token: str = Query(""),
-    origin_pass: str = Query(""),
+    token: str = Depends(bearer_token),
+    origin_pass: str = Body("", embed=True),
     email: str = Query(""),
     phone: str = Query(""),
     wechat_id: str = Query(""),
@@ -197,7 +199,7 @@ def contact(
 
 
 @router.post("/logout")
-def logout(token: str = Query("")):
+def logout(token: str = Depends(bearer_token)):
     # Java returns int
     with tx() as conn:
         exists = fetch_one(conn, "select count(*) as c from tokens where tokens.token=:token", {"token": token})
@@ -210,7 +212,7 @@ def logout(token: str = Query("")):
 @router.post("/register")
 def register(
     username: str = Query(""),
-    password: str = Query(""),
+    password: str = Body("", embed=True),
     name: str = Query(""),
     card_id: str = Query(""),
     phone: str = Query(""),

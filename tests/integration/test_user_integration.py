@@ -86,14 +86,15 @@ def test_register_duplicate_then_reject(integration_client):
         "email": "u100@example.com",
     }
 
-    r1 = integration_client.post("/api/user/register", params=params)
+    password = params.pop("password")
+    r1 = integration_client.post("/api/user/register", params=params, json={"password": password})
     assert r1.status_code == 200
     assert r1.json()["status"] == 0
     with db_module.engine.begin() as conn:
         stored = conn.exec_driver_sql("select password from users where username='u100'").scalar_one()
     assert stored.startswith("$argon2id$")
 
-    r2 = integration_client.post("/api/user/register", params=params)
+    r2 = integration_client.post("/api/user/register", params=params, json={"password": password})
     assert r2.status_code == 200
     assert r2.json()["status"] == -1
 
@@ -116,7 +117,7 @@ def test_verify_with_valid_token(integration_client):
             (user_id, "tok-ok", None),
         )
 
-    r = integration_client.post("/api/user/verify", params={"token": "tok-ok"})
+    r = integration_client.post("/api/user/verify", headers={"Authorization": "Bearer tok-ok"})
     assert r.status_code == 200
     body = r.json()
     assert body["status"] == 1
@@ -131,7 +132,7 @@ def test_legacy_member_login_upgrades_password(integration_client):
         )
 
     response = integration_client.post(
-        "/api/user/login", params={"username": "old-member", "password": "Aa1$oldpass"}
+        "/api/user/login", params={"username": "old-member"}, json={"password": "Aa1$oldpass"}
     )
     assert response.json()["status"] == 2
     assert response.json()["data"]
@@ -148,7 +149,7 @@ def test_public_legacy_admin_password_is_rejected(integration_client):
         )
 
     response = integration_client.post(
-        "/admin/api/user/login", params={"username": "admin", "password": "admin"}
+        "/admin/api/user/login", params={"username": "admin"}, json={"password": "admin"}
     )
     assert response.json()["status"] == -2
 
@@ -165,7 +166,7 @@ def test_logout_removes_token(integration_client):
             (user_id, "tok-logout", (datetime.now() + timedelta(hours=1)).isoformat()),
         )
 
-    r = integration_client.post("/api/user/logout", params={"token": "tok-logout"})
+    r = integration_client.post("/api/user/logout", headers={"Authorization": "Bearer tok-logout"})
     assert r.status_code == 200
     assert r.json() == 0
 

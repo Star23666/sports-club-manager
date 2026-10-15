@@ -261,7 +261,7 @@ export default {
         return;
       }
       const token = Cookies.get('token');
-      this.$http.post(`/user/password?token=${token}&origin_pass=${encodeURIComponent(this.changeInf.originPass)}&new_pass=${encodeURIComponent(this.changeInf.newPass)}`)
+      this.$http.post(`/user/password?token=${token}`, { origin_pass: this.changeInf.originPass, new_pass: this.changeInf.newPass })
           .then(response =>{
             this.loading = false;
             if(response.data.status <= 0){
@@ -352,7 +352,7 @@ export default {
         return;
       }
       this.loading = true;
-      this.$http.post('/user/newEquipment?token='+Cookies.get('token')+'&equip_id='+await this.$finger()+'&name='+encodeURIComponent(this.name)+'&password='+encodeURIComponent(this.password))
+      this.$http.post('/user/newEquipment?token='+Cookies.get('token')+'&equip_id='+await this.$finger()+'&name='+encodeURIComponent(this.name), { password: this.password })
           .then(response => {
             this.loading = false;
             if(response.status !== 200){
@@ -420,7 +420,7 @@ export default {
       this.isChangeContactVerifyShow = false;
       this.isChangePassVerifyShow = false;
       const token = Cookies.get('token');
-      this.$http.post(`/user/contact?token=${token}&origin_pass=${encodeURIComponent(this.changeInf.originPass)}&email=${encodeURIComponent(this.changeInf.email)}&phone=${encodeURIComponent(this.changeInf.phone)}&wechat_id=${encodeURIComponent(this.changeInf.wechat_id)}`)
+      this.$http.post(`/user/contact?token=${token}&email=${encodeURIComponent(this.changeInf.email)}&phone=${encodeURIComponent(this.changeInf.phone)}&wechat_id=${encodeURIComponent(this.changeInf.wechat_id)}`, { origin_pass: this.changeInf.originPass })
           .then(response =>{
             this.loading = false;
             if(response.data.status <= 0){

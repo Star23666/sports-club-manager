@@ -20,6 +20,25 @@ axios.defaults.timeout = 2000
 axios.defaults.baseURL = "/api"
 axios.defaults.retry = 3;
 
+// Existing views still build token query strings. Strip them before any request
+// leaves the browser and send the credential through the standard auth header.
+axios.interceptors.request.use((config) => {
+    const url = config.url || '';
+    const queryStart = url.indexOf('?');
+    if (queryStart !== -1) {
+        const query = new URLSearchParams(url.slice(queryStart + 1));
+        const token = query.get('token');
+        if (token) {
+            query.delete('token');
+            const remainingQuery = query.toString();
+            config.url = url.slice(0, queryStart) + (remainingQuery ? `?${remainingQuery}` : '');
+            config.headers = config.headers || {};
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    return config;
+});
+
 axios.interceptors.response.use(undefined, function axiosRetryInterceptor(err) {
     const config = err.config;
     if (config && config.retry) {

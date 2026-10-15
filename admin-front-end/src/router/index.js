@@ -12,6 +12,23 @@ const Service = Axios.create({
   retry: 3
 });
 
+Service.interceptors.request.use((config) => {
+  const url = config.url || '';
+  const queryStart = url.indexOf('?');
+  if (queryStart !== -1) {
+    const query = new URLSearchParams(url.slice(queryStart + 1));
+    const token = query.get('token');
+    if (token) {
+      query.delete('token');
+      const remainingQuery = query.toString();
+      config.url = url.slice(0, queryStart) + (remainingQuery ? `?${remainingQuery}` : '');
+      config.headers = config.headers || {};
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
+
 Service.interceptors.response.use(undefined, function axiosRetryInterceptor(err) {
   const config = err.config;
   if (config && config.retry) {

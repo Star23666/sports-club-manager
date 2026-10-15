@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
@@ -30,7 +32,7 @@ def _action_to_dict(row: dict) -> dict:
 
 @router.post("/create")
 def create_action(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     title: str = Query(""),
     place: str = Query(""),
     time_range: str = Query(""),
@@ -74,7 +76,7 @@ def create_action(
 
 @router.post("/queryActions")
 def query_actions(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     name: str = Query(""),
     state: int = Query(0),
     page_size: int = Query(10),
@@ -106,7 +108,7 @@ def query_actions(
 
 
 @router.post("/deleteAction")
-def delete_action(token: str = Query(""), action_id: int = Query(...)):
+def delete_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -122,7 +124,7 @@ def delete_action(token: str = Query(""), action_id: int = Query(...)):
 
 @router.post("/update")
 def update_action(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     id: int = Query(...),
     title: str = Query(""),
     place: str = Query(""),
@@ -184,7 +186,7 @@ def update_action(
 
 
 @router.post("/releaseAction")
-def release_action(token: str = Query(""), action_id: int = Query(...)):
+def release_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -205,7 +207,7 @@ def release_action(token: str = Query(""), action_id: int = Query(...)):
 
 
 @router.post("/stopRegisterAction")
-def stop_register_action(token: str = Query(""), action_id: int = Query(...)):
+def stop_register_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -224,7 +226,7 @@ def stop_register_action(token: str = Query(""), action_id: int = Query(...)):
 
 
 @router.post("/stopAction")
-def stop_action(token: str = Query(""), action_id: int = Query(...)):
+def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -257,7 +259,7 @@ def stop_action(token: str = Query(""), action_id: int = Query(...)):
 
 
 @router.post("/reSign")
-def resign(token: str = Query(""), record_id: int = Query(...), sign_code: str = Query("")):
+def resign(token: str = Depends(bearer_token), record_id: int = Query(...), sign_code: str = Query("")):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -283,7 +285,7 @@ def resign(token: str = Query(""), record_id: int = Query(...), sign_code: str =
 
 
 @router.post("/queryActionMembers")
-def query_action_members(token: str = Query(""), action_id: int = Query(...)):
+def query_action_members(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -295,7 +297,7 @@ def query_action_members(token: str = Query(""), action_id: int = Query(...)):
 
 @router.post("/queryRecords")
 def query_records(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     name: str = Query(""),
     title: str = Query(""),
     page_size: int = Query(10),
@@ -326,7 +328,7 @@ def query_records(
 
 @router.post("/queryWorkRecords")
 def query_work_records(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     name: str = Query(""),
     title: str = Query(""),
     page_size: int = Query(10),

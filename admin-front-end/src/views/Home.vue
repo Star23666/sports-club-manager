@@ -212,7 +212,7 @@ export default {
           return;
         }
         const token = Cookies.get('token');
-        this.$http.post(`/user/password?token=${token}&origin_pass=${encodeURIComponent(this.changeInf.ori_pass)}&new_pass=${encodeURIComponent(this.changeInf.new_pass)}`)
+        this.$http.post(`/user/password?token=${token}`, { origin_pass: this.changeInf.ori_pass, new_pass: this.changeInf.new_pass })
             .then(response =>{
               if(response.data.status <= 0){
                 layer.msg('Account Abnormal', {icon: 2, time: 1500});
@@ -235,7 +235,7 @@ export default {
       }
       if(this.verifyEventId === 2){
         const token = Cookies.get('token');
-        this.$http.post(`/user/contact?token=${token}&origin_pass=${encodeURIComponent(this.changeInf.ori_pass)}&email=${encodeURIComponent(this.changeInf.email)}&phone=${encodeURIComponent(this.changeInf.phone)}&wechat_id=${encodeURIComponent(this.changeInf.wechat_id)}`)
+        this.$http.post(`/user/contact?token=${token}&email=${encodeURIComponent(this.changeInf.email)}&phone=${encodeURIComponent(this.changeInf.phone)}&wechat_id=${encodeURIComponent(this.changeInf.wechat_id)}`, { origin_pass: this.changeInf.ori_pass })
             .then(response =>{
               if(response.data.status <= 0){
                 layer.msg('Account Abnormal', {icon: 2, time: 1500});

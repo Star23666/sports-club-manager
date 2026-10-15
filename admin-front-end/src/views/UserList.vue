@@ -362,7 +362,7 @@ export default {
             , {icon:7, time: 1500});
         return;
       }
-      this.$http.post(`/member/updateUserPassword?token=${Cookies.get('token')}&user_id=${this.dataSource[this.currentIndex].id}&password=${this.changeInf.new_pass}`)
+      this.$http.post(`/member/updateUserPassword?token=${Cookies.get('token')}&user_id=${this.dataSource[this.currentIndex].id}`, { password: this.changeInf.new_pass })
           .then(res => {
             if(res.status === 200){
               if(res.data.status === -2) {

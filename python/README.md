@@ -40,9 +40,10 @@ See `.env.example` for all options. Key settings:
 | `CORS_ORIGINS` | Local client/admin URLs | Comma-separated, exact allowed frontend origins |
 
 ## API Style
-- Most endpoints: `POST` + QueryString params → `{ "status": int, "data": ... }`
-- Token auth: `UUID token + tokens table + out_time`
-- Passwords: Argon2id for new/changed passwords; legacy MD5 is upgraded after correct login. Do not expose this API publicly until password/token query parameters are removed.
+- Most endpoints: `POST` + non-secret query parameters → `{ "status": int, "data": ... }`
+- Token auth: `Authorization: Bearer <UUID token>` + tokens table + out_time. Query-string tokens are ignored.
+- Passwords: JSON request body; Argon2id for new/changed passwords. Legacy MD5 is upgraded after correct login.
+- Do not expose this API with real users yet: one-tap equipment login, sign-in codes, some personal information in query strings, and authorization boundaries still need review.
 
 ## Docker
 

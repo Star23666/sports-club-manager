@@ -230,7 +230,7 @@ export default {
         showToast("The currently set password does not meet the rules: The password must be at least 8 characters long and contain uppercase and lowercase letters, numbers, and special symbols");
         return;
       }
-      this.$http.post(`/find/resetPassword?code=${encodeURIComponent(this.verify_code)}&password=${encodeURIComponent(this.password)}`)
+      this.$http.post('/find/resetPassword', { code: this.verify_code, password: this.password })
           .then(response =>{
             this.disabled = false;
             if(response.status !== 200){

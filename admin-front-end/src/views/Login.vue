@@ -81,7 +81,8 @@ export default {
       this.disabled = true;
       this.$http({
         method: 'POST',
-        url: `/user/login?username=${encodeURIComponent(this.username)}&password=${encodeURIComponent(this.password)}`,
+        url: `/user/login?username=${encodeURIComponent(this.username)}`,
+        data: { password: this.password },
       }).then((response) => {
         this.disabled = false;
         if(response.data.status === -2){

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
@@ -30,7 +32,7 @@ def _action_to_dict(row: dict) -> dict:
 
 
 @router.post("/queryAction")
-def query_actions(token: str = Query("")):
+def query_actions(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, _user = token_verify_member(conn, token)
         if status <= 0:
@@ -41,7 +43,7 @@ def query_actions(token: str = Query("")):
 
 
 @router.post("/queryRecord")
-def query_records(token: str = Query("")):
+def query_records(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -55,7 +57,7 @@ def query_records(token: str = Query("")):
 
 
 @router.post("/queryWechatGroup")
-def query_wechat_group(token: str = Query(""), record_id: int = Query(...)):
+def query_wechat_group(token: str = Depends(bearer_token), record_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -77,7 +79,7 @@ def query_wechat_group(token: str = Query(""), record_id: int = Query(...)):
 
 
 @router.post("/attendAction")
-def attend_action(token: str = Query(""), action_id: int = Query(...), borrow: bool = Query(False)):
+def attend_action(token: str = Depends(bearer_token), action_id: int = Query(...), borrow: bool = Query(False)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -120,7 +122,7 @@ def attend_action(token: str = Query(""), action_id: int = Query(...), borrow: b
 
 
 @router.post("/cancelAction")
-def cancel_action(token: str = Query(""), record_id: int = Query(...)):
+def cancel_action(token: str = Depends(bearer_token), record_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:

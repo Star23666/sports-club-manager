@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
@@ -10,7 +12,7 @@ router = APIRouter(prefix="/api/waiting", tags=["waiting"])
 
 
 @router.post("/waitCreate")
-def wait_create(token: str = Query(""), action_id: int = Query(...), borrow: bool = Query(False)):
+def wait_create(token: str = Depends(bearer_token), action_id: int = Query(...), borrow: bool = Query(False)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -52,7 +54,7 @@ def wait_create(token: str = Query(""), action_id: int = Query(...), borrow: boo
 
 
 @router.post("/waitDelete")
-def wait_delete(token: str = Query(""), waiting_id: int = Query(...)):
+def wait_delete(token: str = Depends(bearer_token), waiting_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -75,7 +77,7 @@ def wait_delete(token: str = Query(""), waiting_id: int = Query(...)):
 
 
 @router.post("/queryWaiting")
-def query_waiting(token: str = Query("")):
+def query_waiting(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 
 from ..db import exec_one, fetch_one, tx
 from ..email_service import send_reset_email
@@ -79,7 +79,7 @@ def send_reset_email_api(
 
 
 @router.post("/resetPassword")
-def reset_password(code: str = Query(""), password: str = Query("")):
+def reset_password(code: str = Body("", embed=True), password: str = Body("", embed=True)):
     if not PASSWORD_PATTERN.match(password):
         return vo(-2, "Password Invalid!")
     if not code.strip():

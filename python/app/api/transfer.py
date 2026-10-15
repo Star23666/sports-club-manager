@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
@@ -12,7 +14,7 @@ router = APIRouter(prefix="/api/transfer", tags=["transfer"])
 
 
 @router.post("/queryTransfer")
-def query_transfer(token: str = Query("")):
+def query_transfer(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -33,7 +35,7 @@ def query_transfer(token: str = Query("")):
 
 
 @router.post("/transferRecord")
-def transfer_record(token: str = Query(""), record_id: int = Query(...), receive_user: str = Query("")):
+def transfer_record(token: str = Depends(bearer_token), record_id: int = Query(...), receive_user: str = Query("")):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -73,7 +75,7 @@ def transfer_record(token: str = Query(""), record_id: int = Query(...), receive
 
 
 @router.post("/acceptTransfer")
-def accept_transfer(token: str = Query(""), transfer_id: int = Query(...)):
+def accept_transfer(token: str = Depends(bearer_token), transfer_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -113,7 +115,7 @@ def accept_transfer(token: str = Query(""), transfer_id: int = Query(...)):
 
 
 @router.post("/refuseTransfer")
-def refuse_transfer(token: str = Query(""), transfer_id: int = Query(...)):
+def refuse_transfer(token: str = Depends(bearer_token), transfer_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
