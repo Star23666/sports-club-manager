@@ -109,12 +109,12 @@ def query_unsigned_members(
         sid_pattern = f"%{student_id}%"
         count = fetch_one(
             conn,
-            "select count(*) as c from users where state >= 0 and state < 3 and name like :name_pattern and student_id like :sid_pattern",
+            "select count(*) as c from users where state in (1, 2) and name like :name_pattern and student_id like :sid_pattern",
             {"name_pattern": name_pattern, "sid_pattern": sid_pattern},
         )
         rows = fetch_all(
             conn,
-            "select * from users where state >= 0 and state < 3 and name like :name_pattern and student_id like :sid_pattern "
+            "select * from users where state in (1, 2) and name like :name_pattern and student_id like :sid_pattern "
             "order by unsigned_num DESC, id ASC limit :ps offset :off",
             {"name_pattern": name_pattern, "sid_pattern": sid_pattern, "ps": page_size, "off": offset},
         )
@@ -255,7 +255,7 @@ def clear_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query
         if not user:
             return vo(0, "User Not Exist")
 
-        if int(user.get("state") or 0) not in (0, 1, 2):
+        if int(user.get("state") or 0) not in (1, 2):
             return vo(1, "User Kind Not Match")
 
         u = exec_one(conn, "update users set unsigned_num=:num where id=:uid", {"num": 0, "uid": user_id})
@@ -276,7 +276,7 @@ def reset_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query
         if not user:
             return vo(0, "User Not Exist")
 
-        if int(user.get("state") or 0) not in (0, 1, 2):
+        if int(user.get("state") or 0) not in (1, 2):
             return vo(1, "User Kind Not Match")
 
         num = fetch_one(

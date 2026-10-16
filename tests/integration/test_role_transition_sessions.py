@@ -158,3 +158,34 @@ def test_resigning_restores_member_but_revokes_restricted_session(role_db):
         assert client.post("/api/user/verify", headers=auth("restricted-token")).json()["status"] == -1
     with role_db.begin() as conn:
         assert conn.execute(text("select state from users where id=:uid"), {"uid": member_id}).scalar_one() == 2
+
+
+def test_credit_actions_do_not_unban_an_account(role_db):
+    with role_db.begin() as conn:
+        add_user(conn, "admin", 4, "admin-token")
+        banned_id = add_user(conn, "banned", 0, "banned-token", unsigned_num=3)
+        add_user(conn, "restricted", 1, "restricted-token", unsigned_num=3)
+        add_user(conn, "normal", 2, "normal-token")
+        conn.execute(text("update users set name=username, student_id=username where username in ('restricted', 'normal')"))
+
+    with TestClient(app) as client:
+        for path in ("clearUserUnsigned", "resetUserUnsigned"):
+            result = client.post(
+                f"/admin/api/member/{path}", params={"user_id": banned_id},
+                headers=auth("admin-token"),
+            ).json()
+            assert result["status"] == 1
+            assert result["data"] == "User Kind Not Match"
+
+        listed = client.post(
+            "/admin/api/member/queryUnsignedMembers", headers=auth("admin-token"),
+            json={"name": "", "student_id": ""},
+        ).json()
+        assert listed["status"] == 2
+        assert {member["username"] for member in listed["data"]} == {"restricted", "normal"}
+
+    with role_db.begin() as conn:
+        state, unsigned = conn.execute(
+            text("select state, unsigned_num from users where id=:uid"), {"uid": banned_id},
+        ).one()
+        assert (state, unsigned) == (0, 3)

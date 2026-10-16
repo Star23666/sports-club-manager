@@ -140,7 +140,7 @@ export default {
         { title:"学号", width:"200px", resize:true, key:"student_id" },
         { title:"微信号", width:"160px", resize:true, key:"wechat_id"},
         { title:"手机号", width:"160px", resize:true, key:"phone" },
-        { title:"Dishonest Points", width:"160px", resize:true, key:"unsigned_num" },
+        { title:"失信次数", width:"160px", resize:true, key:"unsigned_num" },
         { title:"状态", width:"150px", resize:true, key:"status_name" },
         { title:"操作" , width: "320px" , fixed: "right", customSlot:"operator", key:"operator", ignoreExport: true }
       ],
