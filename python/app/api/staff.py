@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, Query
 
 from .auth_transport import bearer_token
 
-from ..db import exec_one, fetch_all, fetch_one, tx
+from ..db import exec_one, fetch_all, fetch_one, lock_action, tx
 from ..response import vo
 from ..utils import parse_maybe_datetime
 from .common import token_verify_member
@@ -46,14 +46,14 @@ def query_action_member(token: str = Depends(bearer_token), action_id: int = Que
 
 @router.post("/startSign")
 def start_sign(token: str = Depends(bearer_token), action_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Error")
         if int(user.get("state") or 0) != 3:
             return vo(-1, "No Staff")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action:
             return vo(0, "No Action")
         if int(action.get("state") or 0) != 3:
@@ -73,14 +73,14 @@ def start_sign(token: str = Depends(bearer_token), action_id: int = Query(...)):
 
 @router.post("/stopAction")
 def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Error")
         if int(user.get("state") or 0) < 3:
             return vo(-1, "No Staff")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action:
             return vo(0, "No Action")
         if int(action.get("state") or 0) != 4:
@@ -160,18 +160,21 @@ def query_sign(token: str = Depends(bearer_token), sign_code: str = Body("", emb
 
 @router.post("/finishSign")
 def finish_sign(token: str = Depends(bearer_token), sign_code: str = Body("", embed=True)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Sign Error")
         if int(user.get("state") or 0) != 3:
             return vo(-1, "Identify No Match")
 
-        record = fetch_one(conn, "select * from records where sign_code=:code", {"code": sign_code})
-        if not record:
+        record_ref = fetch_one(conn, "select action_id from records where sign_code=:code", {"code": sign_code})
+        if not record_ref:
             return vo(0, "No Record")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
+        action = lock_action(conn, record_ref["action_id"])
+        record = fetch_one(conn, "select * from records where sign_code=:code", {"code": sign_code}, for_update=True)
+        if not record:
+            return vo(0, "No Record")
         if not action or int(action.get("staff_user_id") or 0) != int(user["id"]):
             return vo(2, "Staff Not Match")
         if int(record.get("state") or 0) == 1:
