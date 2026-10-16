@@ -119,7 +119,7 @@
 </template>
 
 <script>
-import VueQrcode from "@/main";
+import VueQrcode from 'vue-qrcode';
 import {showConfirmDialog, showFailToast, showSuccessToast} from 'vant';
 import Cookies from "js-cookie";
 

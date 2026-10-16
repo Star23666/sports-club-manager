@@ -21,6 +21,12 @@ def test_cors_origins_are_explicit_and_trimmed():
     ]
 
 
+def test_sqlite_path_can_isolate_local_test_data(tmp_path):
+    db_file = tmp_path / "preview.sqlite3"
+    settings = Settings(_env_file=None, SQLITE_PATH=str(db_file))
+    assert str(db_file) in settings.sqlalchemy_url
+
+
 def test_cors_does_not_accept_an_unlisted_origin(client):
     response = client.options(
         "/api/user/login",

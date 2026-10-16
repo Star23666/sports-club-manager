@@ -6,7 +6,7 @@ from sqlalchemy.engine import Connection
 
 from ..db import exec_one, fetch_one, sql_binary
 from ..passwords import verify_user_password
-from ..utils import new_token
+from ..utils import new_token, parse_maybe_datetime
 
 
 def token_verify_member(conn: Connection, token: str) -> tuple[int, dict | None]:
@@ -23,7 +23,9 @@ def token_verify_member(conn: Connection, token: str) -> tuple[int, dict | None]
         return -1, None
 
     now = datetime.now()
-    if token_row.get("out_time") and token_row["out_time"] < now:
+    raw_expiry = token_row.get("out_time")
+    expiry = parse_maybe_datetime(raw_expiry)
+    if raw_expiry and (expiry is None or expiry < now):
         exec_one(conn, "delete from tokens where token=:token", {"token": token})
         return 0, None
 
@@ -48,7 +50,9 @@ def token_verify_admin(conn: Connection, token: str) -> tuple[int, dict | None]:
         return -1, None
 
     now = datetime.now()
-    if token_row.get("out_time") and token_row["out_time"] < now:
+    raw_expiry = token_row.get("out_time")
+    expiry = parse_maybe_datetime(raw_expiry)
+    if raw_expiry and (expiry is None or expiry < now):
         exec_one(conn, "delete from tokens where token=:token", {"token": token})
         return 0, None
 

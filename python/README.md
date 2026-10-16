@@ -33,6 +33,7 @@ See `.env.example` for all options. Key settings:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DB_TYPE` | `sqlite` | `sqlite` (zero-config) or `mysql` |
+| `SQLITE_PATH` | (empty) | Optional SQLite file path; useful for isolated local tests |
 | `APP_NAME` | `Sports Club Manager` | Displayed in API docs |
 | `ORG_NAME` | `My Sports Club` | Used in emails |
 | `MEMBER_ID_LABEL` | `Student ID` | Label for the member ID field |
@@ -44,7 +45,9 @@ See `.env.example` for all options. Key settings:
 - Token auth: `Authorization: Bearer <UUID token>` + tokens table + out_time. Query-string tokens are ignored.
 - Passwords: JSON request body; Argon2id for new/changed passwords. Legacy MD5 is upgraded after correct login.
 - Device-only login and new device enrollment are disabled; existing devices can still be revoked. Sign-in codes and registration/contact/profile updates use JSON bodies.
-- Do not expose this API with real users yet: account-recovery rate limits, a complete authorization audit, and browser end-to-end tests are still pending.
+- Account-recovery routes have database-backed fixed-window limits by direct peer IP and account/code. Reverse proxies can make users share one IP bucket; do not trust `X-Forwarded-For` without a trusted-proxy configuration.
+- For an existing MySQL database, run `ALTER TABLE users MODIFY password VARCHAR(255);` and `database/upgrade_recovery_rate_limit.sql` before deploying this version. SQLite initializes the new table automatically.
+- Do not expose this API with real users yet: a complete authorization audit, MySQL integration verification, and browser end-to-end tests are still pending.
 
 ## Docker
 

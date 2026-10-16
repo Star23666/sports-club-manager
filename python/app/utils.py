@@ -22,9 +22,11 @@ def new_token() -> str:
     return str(uuid.uuid4())
 
 
-def parse_maybe_datetime(value: str | None) -> datetime | None:
+def parse_maybe_datetime(value: str | datetime | None) -> datetime | None:
     if not value:
         return None
+    if isinstance(value, datetime):
+        return value.replace(tzinfo=None) if value.tzinfo else value
     s = value.strip()
     if not s:
         return None

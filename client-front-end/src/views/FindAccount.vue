@@ -95,6 +95,10 @@ export default {
               this.state = -1;
               this.description = "No records have been found";
             }
+            if(response.data.status === -3){
+              this.state = -1;
+              this.description = "Too many attempts. Please try again later.";
+            }
             if(response.data.status === 0){
               this.account = response.data.data;
               this.state = 0;

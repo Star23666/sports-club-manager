@@ -76,7 +76,7 @@
 
 <script>
 import QrScanner from '@/components/QrScanner';
-import VueQrcode from "@/main";
+import VueQrcode from 'vue-qrcode';
 import Cookies from "js-cookie";
 import {showFailToast, showSuccessToast, showToast, showDialog} from "vant";
 

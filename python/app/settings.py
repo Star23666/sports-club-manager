@@ -16,6 +16,7 @@ class Settings(BaseSettings):
 
     # ── Database ────────────────────────────────────────
     db_type: str = Field(default="sqlite", validation_alias="DB_TYPE")
+    sqlite_path: Path | None = Field(default=None, validation_alias="SQLITE_PATH")
     db_host: str = Field(default="127.0.0.1", validation_alias="DB_HOST")
     db_port: int = Field(default=3306, validation_alias="DB_PORT")
     db_name: str = Field(default="badminton1", validation_alias="DB_NAME")
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     @property
     def sqlalchemy_url(self) -> str:
         if self.is_sqlite:
-            db_path = Path(__file__).resolve().parents[2] / "badminton.db"
+            db_path = self.sqlite_path or Path(__file__).resolve().parents[2] / "badminton.db"
             return f"sqlite:///{db_path}"
         return (
             f"mysql+pymysql://{self.db_user}:{self.db_password}"

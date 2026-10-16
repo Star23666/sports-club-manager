@@ -88,6 +88,17 @@ SCHEMA_DDL = [
         out_time TEXT
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS recovery_rate_limit (
+        bucket_key TEXT PRIMARY KEY,
+        window_start INTEGER NOT NULL,
+        hits INTEGER NOT NULL
+    )
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS recovery_rate_limit_window_idx
+    ON recovery_rate_limit(window_start)
+    """,
 
     # ── Views (drop + recreate) ─────────────────────────────
     """
