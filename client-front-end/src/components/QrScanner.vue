@@ -37,7 +37,8 @@ const scannerStyle = {
   zIndex: 9999,
 }
 
-const showCloseButton = ref(false)
+// The exit must remain available when camera permission is denied or no camera exists.
+const showCloseButton = ref(true)
 
 const qrcodeData = ref(null)
 
