@@ -48,8 +48,10 @@ See `.env.example` for all options. Key settings:
 - Account-recovery routes have database-backed fixed-window limits by direct peer IP and account/code. Reverse proxies can make users share one IP bucket; do not trust `X-Forwarded-For` without a trusted-proxy configuration.
 - For an existing MySQL database, run `ALTER TABLE users MODIFY password VARCHAR(255);` and `database/upgrade_recovery_rate_limit.sql` before deploying this version. SQLite initializes the new table automatically.
 - The legacy password-column change and rate-limit table migration were smoke-tested against a disposable MySQL 8.0 database; reapplying the table migration was safe, and a synthetic legacy user was preserved. The opt-in test is `tests/integration/test_mysql_recovery.py` and refuses databases not named `club_upgrade_test*`.
+- The opt-in full MySQL workflow test is `tests/integration/test_mysql_full_workflow.py`. Apply `database/install.sql` to a **fresh disposable** database named `club_e2e_test*`, run `python/seed_demo.py`, set `TEST_MYSQL_WORKFLOW=1` with matching `DB_*` settings, then run `pytest tests/integration/test_mysql_full_workflow.py`. It checks member login and enrollment, duplicate enrollment, cross-member and cross-staff denial, check-in, duplicate check-in, and stale transfer rejection. Never point it at a real club database.
+- Tokens with missing or malformed expiration timestamps are now rejected and removed. Anyone relying on a legacy token without an expiration must sign in again.
 - Staff can now enter the member's sign-in code manually if camera scanning is unavailable. The browser-tested path covers login, roster, opening an activity, manual-code check-in, and duplicate-check-in feedback.
-- Do not expose this API with real users yet: a complete authorization audit, the full MySQL workflow, and camera-scanning acceptance are still pending.
+- Do not expose this API with real users yet: the MySQL workflow now has automated coverage, but physical camera-scanning acceptance, concurrency/capacity checks, login throttling, and a broader security review are still required.
 
 ## Docker
 
