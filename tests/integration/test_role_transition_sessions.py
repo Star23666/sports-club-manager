@@ -75,7 +75,7 @@ def test_admin_review_and_credit_restoration_revoke_old_tokens(role_db):
     with role_db.begin() as conn:
         add_user(conn, "admin", 4, "admin-token")
         restricted_id = add_user(conn, "restricted", 1, "restricted-token")
-        pending_id = add_user(conn, "pending", 0, "pending-token")
+        pending_id = add_user(conn, "pending", -1, "pending-token")
 
     with TestClient(app) as client:
         assert client.post(
@@ -189,3 +189,25 @@ def test_credit_actions_do_not_unban_an_account(role_db):
             text("select state, unsigned_num from users where id=:uid"), {"uid": banned_id},
         ).one()
         assert (state, unsigned) == (0, 3)
+
+
+def test_account_review_cannot_approve_a_banned_account(role_db):
+    with role_db.begin() as conn:
+        add_user(conn, "admin", 4, "admin-token")
+        banned_id = add_user(conn, "banned", 0, "banned-token")
+        pending_id = add_user(conn, "pending", -1, "pending-token")
+
+    with TestClient(app) as client:
+        denied = client.post(
+            "/admin/api/member/passUser", params={"user_id": banned_id},
+            headers=auth("admin-token"),
+        ).json()
+        assert denied["status"] == 0
+        assert client.post(
+            "/admin/api/member/passUser", params={"user_id": pending_id},
+            headers=auth("admin-token"),
+        ).json()["status"] == 1
+
+    with role_db.begin() as conn:
+        assert conn.execute(text("select state from users where id=:uid"), {"uid": banned_id}).scalar_one() == 0
+        assert conn.execute(text("select state from users where id=:uid"), {"uid": pending_id}).scalar_one() == 2

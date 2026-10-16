@@ -236,7 +236,7 @@ def pass_user(token: str = Depends(bearer_token), user_id: int = Query(...)):
             return vo(-2, "Login Error")
 
         user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id}, for_update=True)
-        if not user or int(user.get("state") or 0) > 0:
+        if not user or int(user.get("state") or 0) != -1:
             return vo(0, "User Not Exist")
 
         exec_one(conn, "update users set state = 2 where ID=:id", {"id": user_id})
