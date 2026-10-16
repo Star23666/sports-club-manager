@@ -135,7 +135,7 @@ bash start.sh
 → Open / 打开 <http://localhost:8081/docs> — backend live with SQLite.  
 → First administrator / 首位管理员：运行 `cd python && python -m app.bootstrap_admin`，按提示输入新密码（不会显示或写入命令历史）。旧版数据库若仍有公开的 `admin/admin`，此命令会要求设置新密码并轮换该账号。
 
-> 安全提示：旧版 MySQL 数据库请先执行 `ALTER TABLE users MODIFY password VARCHAR(255);`，再升级服务。现有用户的 MD5 密码仅在正确登录时迁移为 Argon2；公开的旧版管理员密码不能登录，必须通过上述本机命令轮换。当前 API 仍通过 URL 查询参数传递密码与令牌，不要公开部署。
+> 安全提示：旧版 MySQL 数据库请先执行 `ALTER TABLE users MODIFY password VARCHAR(255);`，再升级服务。现有用户的 MD5 密码仅在正确登录时迁移为 Argon2；公开的旧版管理员密码不能登录，必须通过上述本机命令轮换。密码现通过 JSON 请求体、会话令牌通过 `Authorization: Bearer` 请求头传递；但一键设备登录、签到码及部分个人信息的传输与权限边界尚未完成审计，不要公开部署真实用户数据。
 
 **Requirements / 环境要求:** Python 3.10+. That's it. No Docker, MySQL, or Node.js needed.
 
@@ -277,6 +277,8 @@ pytest tests/ -v
 Tests cover token verification, login, registration, password validation, utilities. Integration tests use SQLite in-memory — no setup needed.  
 测试覆盖令牌验证、登录、注册、密码校验、工具函数。集成测试使用 SQLite 内存数据库，无需额外配置。
 
+Frontend builds / 前端构建：分别在 `client-front-end` 和 `admin-front-end` 执行 `npm ci && npm run build`；PR 自动检查也会运行这两项。
+
 ---
 
 ## 🔒 Security / 安全
@@ -284,7 +286,8 @@ Tests cover token verification, login, registration, password validation, utilit
 | Concern / 关注点 | Implementation / 实现 | Production Note / 生产环境建议 |
 |---|---|---|
 | Password hashing / 密码哈希 | 新密码使用 Argon2id；旧 MD5 在成功登录后升级 | 先轮换旧版公开管理员密码 |
-| Auth / 认证 | UUID v4 token, 3h expiry | 密码与令牌仍在 URL 查询参数中，不可公开部署 |
+| Auth / 认证 | UUID v4 token, 3h expiry；`Authorization: Bearer` 请求头 | 一键设备登录和权限边界尚需审计，不可公开部署真实用户数据 |
+| Password transport / 密码传输 | JSON 请求体，不接受 URL 查询参数中的密码 | 部署时必须使用 HTTPS；签到码和部分个人信息仍需进一步迁移 |
 | CORS | 显式配置 `CORS_ORIGINS` | 部署前设置实际前端域名 |
 | SMTP | STARTTLS on port 587 | Use app-specific passwords |
 | SQL injection / SQL 注入 | Parameterized queries / 参数化查询 | ✅ Safe / 安全 |

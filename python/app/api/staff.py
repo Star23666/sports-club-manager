@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
@@ -12,7 +14,7 @@ router = APIRouter(prefix="/api/staff", tags=["staff"])
 
 
 @router.post("/queryAction")
-def query_action(token: str = Query("")):
+def query_action(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -25,7 +27,7 @@ def query_action(token: str = Query("")):
 
 
 @router.post("/queryActionMember")
-def query_action_member(token: str = Query(""), action_id: int = Query(...)):
+def query_action_member(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -38,7 +40,7 @@ def query_action_member(token: str = Query(""), action_id: int = Query(...)):
 
 
 @router.post("/startSign")
-def start_sign(token: str = Query(""), action_id: int = Query(...)):
+def start_sign(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -64,7 +66,7 @@ def start_sign(token: str = Query(""), action_id: int = Query(...)):
 
 
 @router.post("/stopAction")
-def stop_action(token: str = Query(""), action_id: int = Query(...)):
+def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -104,7 +106,7 @@ def stop_action(token: str = Query(""), action_id: int = Query(...)):
 
 
 @router.post("/querySign")
-def query_sign(token: str = Query(""), sign_code: str = Query("")):
+def query_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -141,7 +143,7 @@ def query_sign(token: str = Query(""), sign_code: str = Query("")):
 
 
 @router.post("/finishSign")
-def finish_sign(token: str = Query(""), sign_code: str = Query("")):
+def finish_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:

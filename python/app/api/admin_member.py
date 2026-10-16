@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
@@ -19,7 +21,7 @@ def _user_to_view(row: dict) -> dict:
 
 @router.post("/queryMembers")
 def query_members(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     name: str = Query(""),
     student_id: str = Query(""),
     state: int = Query(-1),
@@ -62,7 +64,7 @@ def query_members(
 
 @router.post("/queryReviewMembers")
 def query_review_members(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     name: str = Query(""),
     student_id: str = Query(""),
     page_size: int = Query(10),
@@ -91,7 +93,7 @@ def query_review_members(
 
 @router.post("/queryUnsignedMembers")
 def query_unsigned_members(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     name: str = Query(""),
     student_id: str = Query(""),
     page_size: int = Query(10),
@@ -121,7 +123,7 @@ def query_unsigned_members(
 
 @router.post("/updateUserInf")
 def update_user_inf(
-    token: str = Query(""),
+    token: str = Depends(bearer_token),
     id: int = Query(...),
     username: str = Query(""),
     state: int = Query(...),
@@ -180,7 +182,7 @@ def update_user_inf(
 
 
 @router.post("/updateUserPassword")
-def update_user_password(token: str = Query(""), user_id: int = Query(...), password: str = Query("")):
+def update_user_password(token: str = Depends(bearer_token), user_id: int = Query(...), password: str = Body("", embed=True)):
     if not PASSWORD_PATTERN.match(password):
         return vo(-2, "Password Invalid!")
 
@@ -201,7 +203,7 @@ def update_user_password(token: str = Query(""), user_id: int = Query(...), pass
 
 
 @router.post("/deleteUser")
-def delete_user(token: str = Query(""), user_id: int = Query(...)):
+def delete_user(token: str = Depends(bearer_token), user_id: int = Query(...)):
     with tx() as conn:
         ok, admin = token_verify_admin(conn, token)
         if ok <= 0 or not admin:
@@ -224,7 +226,7 @@ def delete_user(token: str = Query(""), user_id: int = Query(...)):
 
 
 @router.post("/passUser")
-def pass_user(token: str = Query(""), user_id: int = Query(...)):
+def pass_user(token: str = Depends(bearer_token), user_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -239,7 +241,7 @@ def pass_user(token: str = Query(""), user_id: int = Query(...)):
 
 
 @router.post("/clearUserUnsigned")
-def clear_user_unsigned(token: str = Query(""), user_id: int = Query(...)):
+def clear_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -258,7 +260,7 @@ def clear_user_unsigned(token: str = Query(""), user_id: int = Query(...)):
 
 
 @router.post("/resetUserUnsigned")
-def reset_user_unsigned(token: str = Query(""), user_id: int = Query(...)):
+def reset_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query(...)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -282,7 +284,7 @@ def reset_user_unsigned(token: str = Query(""), user_id: int = Query(...)):
 
 
 @router.post("/queryStaffMembers")
-def query_staff_members(token: str = Query(""), name: str = Query(""), select_id: int = Query(-1)):
+def query_staff_members(token: str = Depends(bearer_token), name: str = Query(""), select_id: int = Query(-1)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -302,7 +304,7 @@ def query_staff_members(token: str = Query(""), name: str = Query(""), select_id
 
 
 @router.post("/queryInboxData")
-def query_inbox_data(token: str = Query("")):
+def query_inbox_data(token: str = Depends(bearer_token)):
     with tx() as conn:
         ok, admin = token_verify_admin(conn, token)
         if ok <= 0 or not admin:

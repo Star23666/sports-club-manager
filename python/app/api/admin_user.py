@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Depends, Query
+
+from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_one, tx
 from ..response import vo
@@ -12,21 +14,21 @@ router = APIRouter(prefix="/admin/api/user", tags=["admin-user"])
 
 
 @router.post("/login")
-def admin_login(username: str = Query(""), password: str = Query("")):
+def admin_login(username: str = Query(""), password: str = Body("", embed=True)):
     with tx() as conn:
         status, token_value = login_common(conn, username, password, admin=True)
         return vo(status, token_value if status == 0 else None)
 
 
 @router.post("/verify")
-def verify(token: str = Query("")):
+def verify(token: str = Depends(bearer_token)):
     with tx() as conn:
         status, user_view = token_verify_admin(conn, token)
         return vo(status, user_view)
 
 
 @router.post("/password")
-def change_password(token: str = Query(""), origin_pass: str = Query(""), new_pass: str = Query("")):
+def change_password(token: str = Depends(bearer_token), origin_pass: str = Body("", embed=True), new_pass: str = Body("", embed=True)):
     if not PASSWORD_PATTERN.match(new_pass):
         return vo(-2, "Password Invalid!")
 
@@ -47,8 +49,8 @@ def change_password(token: str = Query(""), origin_pass: str = Query(""), new_pa
 
 @router.post("/contact")
 def contact(
-    token: str = Query(""),
-    origin_pass: str = Query(""),
+    token: str = Depends(bearer_token),
+    origin_pass: str = Body("", embed=True),
     email: str = Query(""),
     phone: str = Query(""),
     wechat_id: str = Query(""),
@@ -73,7 +75,7 @@ def contact(
 
 
 @router.post("/logout")
-def logout(token: str = Query("")):
+def logout(token: str = Depends(bearer_token)):
     # Java returns int
     with tx() as conn:
         exists = fetch_one(conn, "select count(*) as c from tokens where tokens.token=:token", {"token": token})
