@@ -8,6 +8,7 @@ from app import db as db_module
 from app import main as app_main
 from app.utils import encrypt_md5
 from app.passwords import LEGACY_DEFAULT_ADMIN_HASH
+from app.api import find as find_api
 
 
 @pytest.fixture
@@ -49,6 +50,24 @@ def integration_client(tmp_path, monkeypatch):
                 name TEXT,
                 equip_id TEXT,
                 user_id INTEGER
+            )
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE verifycode (
+                user_id INTEGER PRIMARY KEY,
+                code TEXT,
+                out_time TEXT
+            )
+            """
+        )
+        conn.exec_driver_sql(
+            """
+            CREATE TABLE recovery_rate_limit (
+                bucket_key TEXT PRIMARY KEY,
+                window_start INTEGER NOT NULL,
+                hits INTEGER NOT NULL
             )
             """
         )
@@ -137,7 +156,16 @@ def test_legacy_member_login_upgrades_password(integration_client):
     assert response.json()["data"]
     with db_module.engine.begin() as conn:
         stored = conn.exec_driver_sql("select password from users where username='old-member'").scalar_one()
-    assert stored.startswith("$argon2id$")
+        assert stored.startswith("$argon2id$")
+        user_id = conn.exec_driver_sql("select id from users where username='old-member'").scalar_one()
+        conn.exec_driver_sql(
+            "insert into user_view(ID, username, state) values (?, ?, ?)",
+            (user_id, "old-member", 2),
+        )
+    verified = integration_client.post(
+        "/api/user/verify", headers={"Authorization": f"Bearer {response.json()['data']}"}
+    )
+    assert verified.json()["status"] == 1
 
 
 def test_public_legacy_admin_password_is_rejected(integration_client):
@@ -228,3 +256,55 @@ def test_existing_device_fingerprint_cannot_issue_token_or_enroll_new_device(int
     with db_module.engine.begin() as conn:
         assert conn.exec_driver_sql("select count(*) from tokens").scalar_one() == 1
         assert conn.exec_driver_sql("select count(*) from equipment").scalar_one() == 1
+
+
+def test_recovery_lookup_limits_same_identity_and_ignores_spoofed_forwarded_ip(integration_client):
+    for attempt in range(4):
+        response = integration_client.post(
+            "/api/find/queryUserName",
+            json={"name": "Unknown", "student_id": "not-found"},
+            headers={"X-Forwarded-For": f"192.0.2.{attempt + 1}"},
+        )
+        assert response.json()["status"] == (-3 if attempt == 3 else -1)
+
+
+def test_recovery_lookup_limits_ip_even_with_distinct_identities(integration_client):
+    for attempt in range(13):
+        response = integration_client.post(
+            "/api/find/queryUserName", json={"name": f"Unknown-{attempt}", "student_id": "not-found"}
+        )
+        assert response.json()["status"] == (-3 if attempt == 12 else -1)
+
+
+def test_reset_code_guessing_is_limited(integration_client):
+    for attempt in range(11):
+        response = integration_client.post(
+            "/api/find/resetPassword", json={"code": f"wrong-{attempt}", "password": "Aa1$aaaa"}
+        )
+        assert response.json()["status"] == (-3 if attempt == 10 else -2)
+
+
+def test_reset_email_throttle_and_valid_code_work_with_sqlite_dates(integration_client, monkeypatch):
+    monkeypatch.setattr(find_api, "send_reset_email", lambda *_args: True)
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, name, student_id, email, state) values (?, ?, ?, ?, ?, ?)",
+            ("recover-me", encrypt_md5("Aa1$oldpass"), "Member", "S100", "member@example.com", 2),
+        )
+
+    payload = {"username": "recover-me", "name": "Member", "student_id": "S100"}
+    first = integration_client.post("/api/find/sendResetEmail", json=payload)
+    assert first.json()["status"] == 1
+    second = integration_client.post("/api/find/sendResetEmail", json=payload)
+    assert second.json()["status"] == -1
+    third = integration_client.post("/api/find/sendResetEmail", json=payload)
+    assert third.json()["status"] == -3
+
+    with db_module.engine.begin() as conn:
+        code = conn.exec_driver_sql("select code from verifycode").scalar_one()
+    reset = integration_client.post("/api/find/resetPassword", json={"code": code, "password": "Aa1$newpass"})
+    assert reset.json()["status"] == 0
+    login = integration_client.post(
+        "/api/user/login", json={"username": "recover-me", "password": "Aa1$newpass"}
+    )
+    assert login.json()["status"] == 2

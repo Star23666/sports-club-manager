@@ -8,6 +8,7 @@ from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, tx
 from ..response import vo
+from ..utils import parse_maybe_datetime
 from .common import token_verify_member
 
 router = APIRouter(prefix="/api/staff", tags=["staff"])
@@ -61,7 +62,8 @@ def start_sign(token: str = Depends(bearer_token), action_id: int = Query(...)):
             return vo(2, f"Staff No Match:{user['id']}/{action.get('staff_user_id')}")
 
         now = datetime.now()
-        if action.get("open_time") and action["open_time"] > now:
+        open_time = parse_maybe_datetime(action.get("open_time"))
+        if action.get("open_time") and (open_time is None or open_time > now):
             return vo(3, "Time Exceed")
 
         exec_one(conn, "delete from transfer where exists(select * from records where ID = record_id and action_id = :aid)", {"aid": action_id})
@@ -87,7 +89,8 @@ def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...))
             return vo(2, f"Staff No Match:{user['id']}/{action.get('staff_user_id')}")
 
         now = datetime.now()
-        if action.get("close_time") and action["close_time"] > now:
+        close_time = parse_maybe_datetime(action.get("close_time"))
+        if action.get("close_time") and (close_time is None or close_time > now):
             return vo(3, "Time Exceed")
 
         exec_one(

@@ -161,6 +161,10 @@ export default {
               showFailToast("Incorrectly filled in account information");
               return;
             }
+            if(response.data.status === -3){
+              showFailToast("Too many attempts. Please try again later.");
+              return;
+            }
             if(response.data.status === -1){
               showToast("Email has been sent, please do not resubmit within 2 minutes");
               this.verify_code = this.password = this.password_confirm = this.student_name = this.username = this.student_id = '';
@@ -243,6 +247,10 @@ export default {
               showFailToast("Incorrectly filled in verification code");
               return;
             }
+            if(response.data.status === -3){
+              showFailToast("Too many attempts. Please try again later.");
+              return;
+            }
             if(response.data.status === -1){
               showFailToast("The validity of the verification code has expired, please resend the email.");
               this.step = 0;
@@ -301,6 +309,10 @@ export default {
             }
             if(response.data.status === -2){
               showFailToast("Incorrectly filled in account information");
+              return;
+            }
+            if(response.data.status === -3){
+              showFailToast("Too many attempts. Please try again later.");
               return;
             }
             if(response.data.status === -1){
