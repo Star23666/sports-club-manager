@@ -1,41 +1,41 @@
 <template>
   <van-toast v-model:show="loading" type="loading" overlay="true" duration="0"
-             forbid_click="true" message="Loading..."></van-toast>
+             forbid_click="true" message="加载中..."></van-toast>
   <Vcode :show="isShow"
-         slider-text="Drag Slider to Complete Puzzle"
-         fail-text="Verification Failed, Please Try Again"
-         success-text="Verification Passed"
+         slider-text="拖动滑块完成验证"
+         fail-text="验证失败，请重试"
+         success-text="验证通过"
          :range="5"
          @success="onSubmit"
          @close="close"
   />
   <van-pull-refresh
-      pulling-text="Pull Down to Refresh..."
-      loosing-text="Release to Refresh..."
-      loading-text="Loading..."
-      success-text="Refresh Successfully..."
+      pulling-text="下拉刷新"
+      loosing-text="松开刷新"
+      loading-text="加载中..."
+      success-text="刷新成功"
       v-model="isLoading"
       @refresh="onRefresh"
   >
     <div v-if="actionList.length === 0">
-      <van-empty description="No Activity to Participate in" />
+      <van-empty description="暂无可报名活动" />
     </div>
     <van-row justify="center">
       <div v-for="item in actionList">
         <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
           <van-cell :title="item.title"/>
-          <van-cell title="Location">{{item.place}}</van-cell>
-          <van-cell title="Date">{{item.date}}</van-cell>
-          <van-cell title="Time">{{item.time_range}}</van-cell>
-          <van-cell title="Maximum">{{item.max_num}} {{item.max_num > 1 ? "Persons" : "Person"}}</van-cell>
-          <van-cell title="Borrow a Racket">
+          <van-cell title="地点">{{item.place}}</van-cell>
+          <van-cell title="日期">{{item.date}}</van-cell>
+          <van-cell title="时间">{{item.time_range}}</van-cell>
+          <van-cell title="人数上限">{{item.max_num}} 人</van-cell>
+          <van-cell title="借用球拍">
             <template #right-icon>
               <van-switch v-model="borrow">
               </van-switch>
             </template>
           </van-cell>
           <van-cell>
-            <van-button @click="onClick(item.id)" :disabled="buttonDisabled" type="primary" size="small" icon="plus">Participate</van-button>
+            <van-button @click="onClick(item.id)" :disabled="buttonDisabled" type="primary" size="small" icon="plus">报名参加</van-button>
           </van-cell>
         </van-cell-group>
         <br/>
@@ -98,30 +98,30 @@ export default {
           .then(response => {
             this.loading = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               this.buttonDisabled = false;
             }
             if(response.data.status === -2){
               this.$memberVerify();
             }
             if(response.data.status < 0){
-              showFailToast("Your account does not allow you to directly participate in actions!\n");
+              showFailToast("当前账号暂不能直接报名活动");
               this.buttonDisabled = false;
             }
             if(response.data.status === 0){
-              showFailToast("The current action has closed for participation, please refresh the page!");
+              showFailToast("活动已停止报名，请刷新页面");
               this.buttonDisabled = false;
             }
             else if(response.data.status === 1){
-              showFailToast("You have already participated or are on the waiting list for this event. You cannot participate multiple times!");
+              showFailToast("你已报名或进入候补名单，不能重复报名");
               this.buttonDisabled = false;
             }
             else if(response.data.status === 2){
               showConfirmDialog({
                 message:
-                    'Sorry, the current activity has reached the upper limit. Would you like to join the waiting list? During the open period, if a student cancels his/her participation, priority will be given to students on the waiting list. When the event closes for participation, the waitlist records for uncompleted redemptions will be deleted. You can check the waitlist results in "Participation" after the deadline is announced!',
-                confirmButtonText: 'Join Waitlist',
-                cancelButtonText: 'Cancel'
+                    '活动名额已满，是否加入候补？报名期间有人取消时将按候补顺序递补；报名截止后未递补的候补记录会被清除。你可以在“我的报名”中查看结果。',
+                confirmButtonText: '加入候补',
+                cancelButtonText: '取消'
               })
                   .then(() => {
                     this.addToWaitList();
@@ -131,13 +131,13 @@ export default {
                   });
             }
             else if(response.data.status === 3){
-              showSuccessToast("Participation is successful. Please go to 'Participation' to check the record. Please attend on time.");
+              showSuccessToast('报名成功，请到“我的报名”查看并按时参加');
               this.buttonDisabled = false;
             }
           })
           .catch(error =>{
             console.log(error);
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.buttonDisabled = false;
           });
       //alert("报名活动：" + this.currentId);
@@ -149,33 +149,33 @@ export default {
           .then(response => {
             this.loading = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               this.buttonDisabled = false;
             }
             if(response.data.status < 0){
-              showFailToast("Your account does not allow you to add to waitlist!");
+              showFailToast("当前账号不能加入候补");
               this.buttonDisabled = false;
             }
             if(response.data.status === 0){
-              showFailToast("The current action cannot be rescheduled, please refresh the page\n");
+              showFailToast("该活动不能候补，请刷新页面");
               this.buttonDisabled = false;
             }
             if(response.data.status === 1){
-              showFailToast("The current action has generated new quotas. Please refresh the page and participate again.");
+              showFailToast("活动已有空位，请刷新页面直接报名");
               this.buttonDisabled = false;
             }
             if(response.data.status === 2){
-              showFailToast("The current action cannot be participated in repeatedly");
+              showFailToast("不能重复参加此活动");
               this.buttonDisabled = false;
             }
             if(response.data.status === 3){
-              showSuccessToast("Already added to the waiting list, please go to 'Transfer and Wait' to view the waiting record.");
+              showSuccessToast('已加入候补，请到“转让与候补”查看');
               this.buttonDisabled = false;
             }
           })
           .catch(error =>{
             console.log(error);
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.buttonDisabled = false;
           });
     }

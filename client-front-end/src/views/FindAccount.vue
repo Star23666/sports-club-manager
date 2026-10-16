@@ -1,15 +1,15 @@
 <template>
   <Vcode :show="isShow"
-         slider-text="Drag Slider to Complete Puzzle"
-         fail-text="Verification Failed, Please Try Again"
-         success-text="Verification Passed"
+         slider-text="拖动滑块完成验证"
+         fail-text="验证失败，请重试"
+         success-text="验证通过"
          :range="5"
          @success="onSubmitQuery"
          @close="close"
   />
   <van-nav-bar
-      title="Query Username"
-      left-text="Back"
+      title="找回用户名"
+      left-text="返回"
       left-arrow
       fixed
       @click-left="onClickLeft"
@@ -17,44 +17,44 @@
       v-if="$route.path !== '/adminFindAccount'"
   />
   <van-steps :active="step" style="margin-top: 12pt; width: 60%; margin-left: auto; margin-right: auto;">
-    <van-step>Fill in Information</van-step>
-    <van-step>Getting Results</van-step>
+    <van-step>填写信息</van-step>
+    <van-step>查看结果</van-step>
   </van-steps>
   <br/>
   <div v-if="step === 0">
     <van-cell-group inset>
-      <van-cell title="Please fill in the following information for username enquiry"/>
+      <van-cell title="请填写以下信息以找回用户名"/>
       <van-field
           v-model="student_name"
           name="Name"
-          label="Name"
-          placeholder="Please fill in the name on your ID"
+          label="姓名"
+          placeholder="填写真实姓名"
       />
       <van-field
           v-model="student_id"
           name="Student ID"
-          label="Student ID"
-          placeholder="Please fill in your student ID"
+          label="学号"
+          placeholder="填写学号"
       />
     </van-cell-group>
     <br/>
     <br/>
-    <van-button round block icon="search" style="width: 50%; margin-left: 25%" type="primary" @click="onSubmitCheck">Query Username</van-button>
+    <van-button round block icon="search" style="width: 50%; margin-left: 25%" type="primary" @click="onSubmitCheck">查询用户名</van-button>
   </div>
   <div v-if="step === 1">
     <van-empty image="search" v-if="state !== 0" :description="description" />
     <div v-if="state === 0">
       <div class="account-recovery-result">
-        <h3>Username has been found</h3>
-        <p style="text-align: left; margin-left: 5pt">Upon inquiry, your username is:</p>
+        <h3>已找到用户名</h3>
+        <p style="text-align: left; margin-left: 5pt">你的用户名是：</p>
         <ul><li style="font-size: 20pt; color: #1988f8"><strong>{{ account }}</strong></li></ul>
-        <p style="text-align: left; margin-left: 5pt">Please take good care of it!</p>
+        <p style="text-align: left; margin-left: 5pt">请妥善保存。</p>
       </div>
 
       <br/>
     </div>
-    <van-button round block icon="replay" style="width: 60%; margin-left: 25%; margin-bottom: 8pt" type="warning" v-if="state === -1" @click="this.step = 0">Modify for Re-Enquiry</van-button>
-    <van-button round block icon="revoke" style="width: 60%; margin-left: 25%" type="default" v-if="state !== -2 && $route.path !== '/adminFindAccount'" @click="onClickLeft">Return to Homepage</van-button>
+    <van-button round block icon="replay" style="width: 60%; margin-left: 25%; margin-bottom: 8pt" type="warning" v-if="state === -1" @click="this.step = 0">修改后重试</van-button>
+    <van-button round block icon="revoke" style="width: 60%; margin-left: 25%" type="default" v-if="state !== -2 && $route.path !== '/adminFindAccount'" @click="onClickLeft">返回首页</van-button>
   </div>
   <br/>
 
@@ -75,7 +75,7 @@ export default {
       step: 0,
       student_name: '',
       student_id: '',
-      description: 'Querying...',
+      description: '查询中...',
       state: -2,
       account: '',
       isShow: false
@@ -89,15 +89,15 @@ export default {
           .then(response =>{
             if(response.status !== 200){
               this.state = -1;
-              this.description = "System Error";
+              this.description = "系统异常，请稍后重试";
             }
             if(response.data.status === -1){
               this.state = -1;
-              this.description = "No records have been found";
+              this.description = "没有找到符合条件的账号";
             }
             if(response.data.status === -3){
               this.state = -1;
-              this.description = "Too many attempts. Please try again later.";
+              this.description = "尝试次数过多，请稍后再试";
             }
             if(response.data.status === 0){
               this.account = response.data.data;
@@ -106,20 +106,20 @@ export default {
           }).
       catch(error =>{
         this.state = -1;
-        this.description = "Internet Error";
+        this.description = "网络异常，请稍后重试";
       });
     },
     onSubmitCheck(){
       if(this.student_name.length === 0){
         showToast({
-          message: 'A real name cannot be empty.',
+          message: '请输入真实姓名',
           position: 'top',
         });
         return;
       }
       if(this.student_id.length === 0){
         showToast({
-          message: 'The student ID cannot be empty.',
+          message: '请输入学号',
           position: 'top',
         });
         return;

@@ -1,15 +1,15 @@
 <template>
-  <van-nav-bar title="My Club" fixed/>
+  <van-nav-bar title="体育俱乐部" fixed/>
   <br/><br/><br/>
   <div style="margin: 0px 10px 0px 10px;">
     <router-view>
     </router-view>
   </div>
   <van-tabbar v-model="active" @change="onChange" fixed>
-    <van-tabbar-item icon="list-switch">Actions</van-tabbar-item>
-    <van-tabbar-item icon="records-o">Participation</van-tabbar-item>
-    <van-tabbar-item icon="tosend">Transfer & Wait</van-tabbar-item>
-    <van-tabbar-item icon="user-circle-o">My Account</van-tabbar-item>
+    <van-tabbar-item icon="list-switch">活动</van-tabbar-item>
+    <van-tabbar-item icon="records-o">我的报名</van-tabbar-item>
+    <van-tabbar-item icon="tosend">转让与候补</van-tabbar-item>
+    <van-tabbar-item icon="user-circle-o">我的账号</van-tabbar-item>
   </van-tabbar>
 </template>
 

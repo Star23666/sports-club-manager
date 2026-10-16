@@ -1,62 +1,62 @@
 <template>
   <lay-container>
     <lay-panel style="width: 750pt; margin-top: max(calc(50vh - 280pt), 20px);">
-        <h2 style="text-align: center; margin-bottom: 25px">Create an Action</h2>
+        <h2 style="text-align: center; margin-bottom: 25px">创建活动</h2>
       <lay-form :model="actionInf" required style="width: 500px; margin-left: calc(375pt - 300px)">
-        <lay-form-item label="Name" style="margin-top: 15pt">
+        <lay-form-item label="活动名称" style="margin-top: 15pt">
           <lay-input v-model="actionInf.name"></lay-input>
         </lay-form-item>
-        <lay-form-item label="Location">
+        <lay-form-item label="地点">
           <lay-input v-model="actionInf.place"></lay-input>
         </lay-form-item>
-        <lay-form-item label="Date">
+        <lay-form-item label="日期">
           <lay-input v-model="actionInf.date"></lay-input>
         </lay-form-item>
-        <lay-form-item label="Time">
+        <lay-form-item label="时间">
           <lay-input v-model="actionInf.time_range"></lay-input>
         </lay-form-item>
-        <lay-form-item label="Maximum">
+        <lay-form-item label="人数上限">
           <lay-input-number v-model="actionInf.max_num" min="1" max="40"></lay-input-number>
         </lay-form-item>
-        <lay-form-item label="Duty Stuff">
-          <lay-select v-model="actionInf.staff_user_id" placeholder="Select..." style="width: 210pt">
+        <lay-form-item label="负责工作人员">
+          <lay-select v-model="actionInf.staff_user_id" placeholder="请选择" style="width: 210pt">
             <template #header>
               <div style="padding: 10px">
-                <lay-input placeholder="Name" prefix-icon="layui-icon-search" v-model="search_name" @input="onQueryNameChange"></lay-input>
+                <lay-input placeholder="搜索姓名" prefix-icon="layui-icon-search" v-model="search_name" @input="onQueryNameChange"></lay-input>
               </div>
             </template>
-            <lay-select-option v-if="actionInf.staff_user_id === -1" :value="-1" label="Select"></lay-select-option>
-            <lay-select-option v-for="item in queryUserList" :value="item.id">{{item.name}}({{item.student_id}}, {{item.unsigned_num}} on Duty)</lay-select-option>
+            <lay-select-option v-if="actionInf.staff_user_id === -1" :value="-1" label="请选择"></lay-select-option>
+            <lay-select-option v-for="item in queryUserList" :value="item.id">{{item.name}}（{{item.student_id}}，值班 {{item.unsigned_num}} 次）</lay-select-option>
             <template #footer>
-              <center v-if="queryUserList.length >= 5" style="font-size: 8pt">Display up to 5 records, please search for rest.</center>
+              <center v-if="queryUserList.length >= 5" style="font-size: 8pt">最多显示 5 条，请搜索其他人员。</center>
             </template>
           </lay-select>
         </lay-form-item>
-        <lay-form-item label="Wechat Group">
+        <lay-form-item label="活动微信群">
           <div class="file-upload-wrapper">
             <input type="file" id="file-upload" class="file-upload" @change="onFileChange" accept="image/*"/>
-            <label for="file-upload" class="file-upload-label"><lay-icon type="layui-icon-link"/> Upload QR Code</label>
+            <label for="file-upload" class="file-upload-label"><lay-icon type="layui-icon-link"/> 上传二维码</label>
           </div>
-          &nbsp;&nbsp;<p style="font-size: 9pt; color: gray; margin-left: 130pt; margin-top: -18pt">*with automatic recognition</p>
+          &nbsp;&nbsp;<p style="font-size: 9pt; color: gray; margin-left: 130pt; margin-top: -18pt">自动识别二维码内容</p>
           <div v-if="decodedResult">
-            <div v-if="decodedResult !== '未識別到信息'" style="font-size: 10pt; margin-top: 8pt">QR Code is Uploaded:
-              <lay-button v-if="!qrcodeShow" size="xs" type="primary" @click="this.qrcodeShow = 1" prefix-icon="layui-icon-show">Preview</lay-button>
-              <lay-button v-else size="xs" type="danger" @click="this.qrcodeShow = 0" prefix-icon="layui-icon-reduce-circle" >Hide</lay-button>
+            <div v-if="decodedResult !== '未識別到信息'" style="font-size: 10pt; margin-top: 8pt">二维码已上传：
+              <lay-button v-if="!qrcodeShow" size="xs" type="primary" @click="this.qrcodeShow = 1" prefix-icon="layui-icon-show">预览</lay-button>
+              <lay-button v-else size="xs" type="danger" @click="this.qrcodeShow = 0" prefix-icon="layui-icon-reduce-circle" >隐藏</lay-button>
               <br/>
               <lay-qrcode v-show="qrcodeShow" :text="actionInf.wechat_url"></lay-qrcode>
             </div>
-            <div v-else style="font-size: 10pt; margin-top: 5pt">The QR code does not exist or is not recognized!</div>
+            <div v-else style="font-size: 10pt; margin-top: 5pt">未识别到二维码，请重新上传。</div>
           </div>
         </lay-form-item>
-        <lay-form-item label="Start Time">
-          <lay-date-picker type="datetime" v-model="actionInf.open_time" placeholder="Allowable-Verification Time" readonly allowClear></lay-date-picker>
+        <lay-form-item label="开放签到时间">
+          <lay-date-picker type="datetime" v-model="actionInf.open_time" placeholder="选择开放签到时间" readonly allowClear></lay-date-picker>
         </lay-form-item>
-        <lay-form-item label="Closed Time">
-          <lay-date-picker type="datetime" v-model="actionInf.close_time" placeholder="Allowable-Terminate Time" readonly allowClear></lay-date-picker>
+        <lay-form-item label="允许结束时间">
+          <lay-date-picker type="datetime" v-model="actionInf.close_time" placeholder="选择允许结束时间" readonly allowClear></lay-date-picker>
         </lay-form-item>
         <div style="text-align: right; margin-top: 4px; margin-right: -18px">
-          <lay-button @click="onReset"><lay-icon type="layui-icon-refresh-one"/> Re-Enter</lay-button>&nbsp;
-          <lay-button type="primary" style="margin-right: 20px" @click="onSubmit" :disabled="disabled"><lay-icon type="layui-icon-add-circle-fine"/> Create</lay-button>
+          <lay-button @click="onReset"><lay-icon type="layui-icon-refresh-one"/> 重填</lay-button>&nbsp;
+          <lay-button type="primary" style="margin-right: 20px" @click="onSubmit" :disabled="disabled"><lay-icon type="layui-icon-add-circle-fine"/> 创建</lay-button>
         </div>
       </lay-form>
     </lay-panel>
@@ -98,7 +98,7 @@ import {layer} from "@layui/layui-vue";
         this.$http.post(`/member/queryStaffMembers?token=${Cookies.get('token')}&select_id=${this.actionInf.staff_user_id}`, { name: this.search_name })
             .then(res => {
               if(res.status !== 200){
-                layer.msg('System Error', {icon: 2, time: 1500});
+                layer.msg('系统异常，请稍后重试', {icon: 2, time: 1500});
                 this.loading = false;
                 return;
               }
@@ -111,7 +111,7 @@ import {layer} from "@layui/layui-vue";
               this.queryUserList = res.data.data;
             })
             .catch(error => {
-              layer.msg('Internet Error!', {icon: 2, time: 1500});
+              layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
             })
       },
@@ -129,19 +129,19 @@ import {layer} from "@layui/layui-vue";
       },
       onSubmit(){
         if(this.actionInf.name === '' || this.actionInf.place === '' || this.actionInf.time_range === '' || this.actionInf.date === ''){
-          layer.msg('Action information needs to be filled out completely', {icon: 7, time: 1500});
+          layer.msg('请填写完整的活动信息', {icon: 7, time: 1500});
           return;
         }
         if(this.actionInf.wechat_url === ''){
-          layer.msg('Please set up an wechat contact group', {icon: 7, time: 1500});
+          layer.msg('请上传活动微信群二维码', {icon: 7, time: 1500});
           return;
         }
         if(this.actionInf.staff_user_id === -1){
-          layer.msg('Please designate a duty stuff for the action.', {icon: 7, time: 1500});
+          layer.msg('请指定负责工作人员', {icon: 7, time: 1500});
           return;
         }
         if(this.actionInf.open_time === '' || this.actionInf.close_time === ''){
-          layer.msg('You need to specify the open and closed times.', {icon: 7, time: 1500});
+          layer.msg('请设置签到开放和允许结束时间', {icon: 7, time: 1500});
           return;
         }
         this.disabled = true;
@@ -151,27 +151,27 @@ import {layer} from "@layui/layui-vue";
             .then(res =>{
               if(res.status !== 200){
                 this.disabled = false;
-                layer.msg("System Error", {icon: 2, time: 1500});
+                layer.msg("系统异常，请稍后重试", {icon: 2, time: 1500});
                 return;
               }
               if(res.data.status === -2)
                 this.$clear();
               if(res.data.status === -1){
                 this.disabled = false;
-                layer.msg("The current Duty Stuff account has been deleted, please reassign it and try again.", {icon: 7, time: 1500});
+                layer.msg("工作人员账号已删除，请重新指定", {icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 0){
                 this.disabled = false;
-                layer.msg("The current Duty Stuff account has been de-authorized, please reassign it and try again.", {icon: 7, time: 1500});
+                layer.msg("工作人员账号已失去权限，请重新指定", {icon: 7, time: 1500});
                 return;
               }
-              layer.msg("Successful Creation Action", {icon: 1, time: 1500});
+              layer.msg("活动创建成功", {icon: 1, time: 1500});
               this.$router.push({path:'/main/action'});
             })
             .catch(res =>{
               this.disabled = false;
-              layer.msg("Internet Error", {icon: 2, time: 1500});
+              layer.msg("网络异常，请稍后重试", {icon: 2, time: 1500});
             })
         this.disabled = true;
       },

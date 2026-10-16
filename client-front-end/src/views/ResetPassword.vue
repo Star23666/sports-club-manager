@@ -1,17 +1,17 @@
 <template>
   <van-toast v-model:show="disabled" type="loading" overlay="true" duration="0"
-             forbid_click="true" message="Loading..."></van-toast>
+             forbid_click="true" message="加载中..."></van-toast>
   <Vcode :show="isShow"
-         slider-text="Drag Slider to Complete Puzzle"
-         fail-text="Verification Failed, Please Try Again"
-         success-text="Verification Passed"
+         slider-text="拖动滑块完成验证"
+         fail-text="验证失败，请重试"
+         success-text="验证通过"
          :range="5"
-         @success="onSubmitQuery"
+         @success="onSuccess"
          @close="close"
   />
   <van-nav-bar
-      title="Reset Password"
-      left-text="Back"
+      title="重置密码"
+      left-text="返回"
       left-arrow
       fixed
       @click-left="onClickLeft"
@@ -19,83 +19,83 @@
       v-if="$route.path !== '/adminResetPassword'"
   />
   <van-steps :active="step" style="margin-top: 12pt; width: 60%; margin-left: 17.5%">
-    <van-step>Send Verification Email</van-step>
-    <van-step>Reset Password</van-step>
+    <van-step>发送验证邮件</van-step>
+    <van-step>设置新密码</van-step>
   </van-steps>
   <br/>
   <div v-if="step === 0">
     <van-cell-group inset>
-      <van-cell title="Please fill in the following information to send a verification email"/>
+      <van-cell title="请填写账号信息，以发送验证邮件"/>
       <van-field
           v-model="username"
           name="賬號"
-          label="Username"
-          placeholder="Please fill in your username"
+          label="用户名"
+          placeholder="填写用户名"
       />
       <van-field
           v-model="student_name"
           name="真實姓名"
-          label="Name"
-          placeholder="Please fill in your real name"
+          label="姓名"
+          placeholder="填写真实姓名"
       />
       <van-field
           v-model="student_id"
           name="學號"
-          label="Student ID"
-          placeholder="Please fill in your student id"
+          label="学号"
+          placeholder="填写学号"
       />
-      <van-cell center title="Send to Campus Email">
+      <van-cell center title="发送到校园邮箱">
         <template #right-icon>
           <van-switch v-model="useStudentEmail" />
         </template>
       </van-cell>
     </van-cell-group>
     <br/><br/>
-    <van-button round block icon="envelop-o" style="width: 50%; margin-left: 25%" type="primary" @click="onSubmitCheck" :disabled="disabled">Send Email</van-button>
+    <van-button round block icon="envelop-o" style="width: 50%; margin-left: 25%" type="primary" @click="onSubmitCheck" :disabled="disabled">发送邮件</van-button>
     <center>
       <p style="font-size: 9pt" v-if="!useStudentEmail">
-       Registered Email is Unavailable? <a @click="this.useStudentEmail = true" style="cursor: pointer; text-decoration: underline">Send to Campus Email</a>
+       注册邮箱不可用？<a @click="this.useStudentEmail = true" style="cursor: pointer; text-decoration: underline">改发校园邮箱</a>
       </p>
       <p style="font-size: 9pt" v-if="useStudentEmail">
-        Too Troublesome to Login on Campus? <a @click="this.useStudentEmail = false" style="cursor: pointer; text-decoration: underline">Send to Registered Email</a>
+        不方便登录校园邮箱？<a @click="this.useStudentEmail = false" style="cursor: pointer; text-decoration: underline">改发注册邮箱</a>
       </p>
       <p style="font-size: 9pt; margin-top: -7pt">
-        Received the verification email? <a @click="this.step = 1" style="cursor: pointer; text-decoration: underline">Click Here to Reset Directly</a>
+        已收到验证邮件？<a @click="this.step = 1" style="cursor: pointer; text-decoration: underline">直接填写验证码</a>
       </p>
     </center>
   </div>
   <div v-if="step === 1">
     <van-cell-group inset>
-      <van-cell title="Please fill in the following information to reset your password"/>
+      <van-cell title="填写验证码和新密码"/>
       <van-field
           label-width="8em"
           v-model="verify_code"
           name="驗證碼"
-          label="Verification Code"
-          placeholder="Please Fill in It in Email"
+          label="验证码"
+          placeholder="填写邮件中的验证码"
       />
       <van-field
           label-width="8em"
           v-model="password"
           name="重置密碼"
-          label="Reset Password"
-          placeholder="Enter Reset Password"
+          label="新密码"
+          placeholder="输入新密码"
           type="password"
       />
       <van-field
           label-width="9em"
           v-model="password_confirm"
           name="密碼確認"
-          label="Password Comfirm"
-          placeholder="Enter Password Again"
+          label="确认密码"
+          placeholder="再次输入新密码"
           type="password"
       />
     </van-cell-group>
     <br/>
     <br/>
-    <van-button round block icon="setting-o" style="width: 50%; margin-left: 25%" type="warning" @click="onCheckReset" :disabled="disabled">Reset Password</van-button>
+    <van-button round block icon="setting-o" style="width: 50%; margin-left: 25%" type="warning" @click="onCheckReset" :disabled="disabled">重置密码</van-button>
     <center>
-      <p style="font-size: 9pt">Didn't receive the email or it has expired? <a @click="this.step = 0" style="cursor: pointer; text-decoration: underline">Back to Previous Step</a></p>
+      <p style="font-size: 9pt">没收到邮件或验证码已过期？<a @click="this.step = 0" style="cursor: pointer; text-decoration: underline">返回上一步</a></p>
     </center>
   </div>
 
@@ -154,19 +154,19 @@ export default {
           .then(response => {
             this.disabled = false;
             if(response.status !== 200){
-              showFailToast("System Error!");
+              showFailToast("系统异常，请稍后重试");
               return;
             }
             if(response.data.status === -2){
-              showFailToast("Incorrectly filled in account information");
+              showFailToast("账号信息不匹配");
               return;
             }
             if(response.data.status === -3){
-              showFailToast("Too many attempts. Please try again later.");
+              showFailToast("尝试次数过多，请稍后再试");
               return;
             }
             if(response.data.status === -1){
-              showToast("Email has been sent, please do not resubmit within 2 minutes");
+              showToast("邮件已发送，请勿在两分钟内重复提交");
               this.verify_code = this.password = this.password_confirm = this.student_name = this.username = this.student_id = '';
               this.useStudentEmail = false;
               this.step = 1;
@@ -174,11 +174,11 @@ export default {
             }
             if(response.data.status === 0){
               showConfirmDialog({
-                title: 'Mistake in Register Email',
+                title: '注册邮箱不可用',
                 message:
-                    'The current account is not registered email or the registration email format is wrong, you can choose to send an email to your campus email or cancel the operation and contact customer service to reset your password, please choose.',
-                confirmButtonText: 'Send to Campus Email',
-                cancelButtonText: 'Cancel'
+                    '此账号未登记有效邮箱。你可以改发校园邮箱，或取消后联系管理员重置密码。',
+                confirmButtonText: '发送到校园邮箱',
+                cancelButtonText: '取消'
               })
                   .then(() => {
                     this.sendToStudentEmail();
@@ -187,40 +187,40 @@ export default {
                     if(this.$route.path !== '/adminResetPassword')
                       this.$router.push('/inbox');
                     showDialog({
-                      message: 'The online password reset operation has been cancelled, please contact customer service with a copy of your ID card to reset your password!',
-                      confirmButtonText: 'Ok'
+                      message: '已取消在线重置。如仍需帮助，请联系管理员核验身份。',
+                      confirmButtonText: '知道了'
                     });
                   });
               //
               return;
             }
-            showSuccessToast("Email sent successfully, please continue to reset password");
+            showSuccessToast("邮件已发送，请继续重置密码");
             this.verify_code = this.password = this.password_confirm = this.student_name = this.username = this.student_id = '';
             this.useStudentEmail = false;
             this.step = 1;
           }).catch(error => {
             this.disabled = false;
-            showFailToast('Internet Error');
+            showFailToast('网络异常，请稍后重试');
           });
     },
     onSubmitCheck() {
       if (this.username.length === 0) {
         showToast({
-          message: 'Username cannot be empty',
+          message: '请输入用户名',
           position: 'top',
         });
         return;
       }
       if (this.student_name.length === 0) {
         showToast({
-          message: 'Name cannot be empty',
+          message: '请输入姓名',
           position: 'top',
         });
         return;
       }
       if (this.student_id.length === 0) {
         showToast({
-          message: 'The student ID cannot be empty.',
+          message: '请输入学号',
           position: 'top',
         });
         return;
@@ -233,32 +233,32 @@ export default {
       const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}/;
       if(pattern.test(this.password) === false){
         this.disabled = false;
-        showToast("The currently set password does not meet the rules: The password must be at least 8 characters long and contain uppercase and lowercase letters, numbers, and special symbols");
+        showToast("密码至少 8 位，且须包含大小写字母、数字和特殊符号");
         return;
       }
       this.$http.post('/find/resetPassword', { code: this.verify_code, password: this.password })
           .then(response =>{
             this.disabled = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               return;
             }
             if(response.data.status === -2){
-              showFailToast("Incorrectly filled in verification code");
+              showFailToast("验证码错误");
               return;
             }
             if(response.data.status === -3){
-              showFailToast("Too many attempts. Please try again later.");
+              showFailToast("尝试次数过多，请稍后再试");
               return;
             }
             if(response.data.status === -1){
-              showFailToast("The validity of the verification code has expired, please resend the email.");
+              showFailToast("验证码已过期，请重新发送邮件");
               this.step = 0;
               this.verify_code = this.password = this.password_confirm = this.student_name = this.username = this.student_id = '';
               this.useStudentEmail = false;
               return;
             }
-            showSuccessToast("Password reset successfully, please use it to register and keep it safe.");
+            showSuccessToast("密码重置成功，请妥善保存并重新登录");
             if(this.$route.path !== '/adminResetPassword')
               this.$router.push("/login");
             this.step = 0;
@@ -267,27 +267,27 @@ export default {
           }).
       catch(error =>{
         this.disabled = false;
-        showFailToast('Internet Error');
+        showFailToast('网络异常，请稍后重试');
       });
     },
     onCheckReset(){
       if(this.verify_code.length === 0){
         showToast({
-          message: 'The verification code cannot be empty.',
+          message: '请输入验证码',
           position: 'top',
         });
         return;
       }
       if(this.password.length === 0){
         showToast({
-          message: 'Reset password cannot be empty',
+          message: '请输入新密码',
           position: 'top',
         });
         return;
       }
       if(this.password !== this.password_confirm){
         showToast({
-          message: 'The passwords entered are not the same.',
+          message: '两次输入的密码不一致',
           position: 'top',
         });
         return;
@@ -304,31 +304,31 @@ export default {
           .then(response => {
             this.disabled = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               return;
             }
             if(response.data.status === -2){
-              showFailToast("Incorrectly filled in account information");
+              showFailToast("账号信息不匹配");
               return;
             }
             if(response.data.status === -3){
-              showFailToast("Too many attempts. Please try again later.");
+              showFailToast("尝试次数过多，请稍后再试");
               return;
             }
             if(response.data.status === -1){
-              showToast("Email has been sent, please do not resubmit within 2 minutes");
+              showToast("邮件已发送，请勿在两分钟内重复提交");
               this.verify_code = this.password = this.password_confirm = '';
               this.useStudentEmail = false;
               this.step = 1;
               return;
             }
-            showSuccessToast("The verification code email has been sent to your campus email, please continue to reset your password.");
+            showSuccessToast("验证码已发送到校园邮箱，请继续重置密码");
             this.verify_code = this.password = this.password_confirm = this.student_name = this.username = this.student_id = '';
             this.useStudentEmail = false;
             this.step = 1;
           }).catch(error => {
         this.disabled = false;
-        showFailToast('Internet Error');
+        showFailToast('网络异常，请稍后重试');
       });
     }
   }

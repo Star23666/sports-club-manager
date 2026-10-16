@@ -1,17 +1,17 @@
 <template>
   <Vcode :show="isShow"
-         slider-text="Drag Slider to Complete Puzzle"
-         fail-text="Verification Failed, Please Try Again"
-         success-text="Verification Passed"
+         slider-text="拖动滑块完成验证"
+         fail-text="验证失败，请重试"
+         success-text="验证通过"
          :range="5"
          @success="onSubmitLogin"
          @close="close"
   />
   <van-toast v-model:show="disabled" type="loading" overlay="true" duration="0"
-             forbid_click="true" message="Loading..."></van-toast>
+             forbid_click="true" message="正在登录..."></van-toast>
   <van-nav-bar
-      title="Login"
-      left-text="Back"
+      title="登录"
+      left-text="返回"
       left-arrow
       fixed
       @click-left="this.$router.push('/inbox');"
@@ -23,9 +23,9 @@
           height="180"
           :src="require('@/assets/badminton.png')"
       />
-      <h2 style="margin-bottom: -15px">My Club</h2>
-      <h4>Sports Activity Management</h4>
-      <h3>Login with Password</h3>
+      <h2 style="margin-bottom: -15px">体育俱乐部</h2>
+      <h4>活动与会员管理</h4>
+      <h3>账号密码登录</h3>
     </center>
     <center>
       <div :style="{maxWidth: '400px', marginTop: '15px'}">
@@ -35,26 +35,26 @@
               v-model="username"
               required
               left-icon="user"
-              placeholder="Username"
-              :rules="[{ required: true, message: 'Username can\'t be null!' }]"
+              placeholder="用户名"
+              :rules="[{ required: true, message: '请输入用户名' }]"
           />
           <van-field
               v-model="password"
               type="password"
               required
               left-icon="lock"
-              placeholder="Password"
-              :rules="[{ required: true, message: 'Password can\'t be null!' }]"
+              placeholder="密码"
+              :rules="[{ required: true, message: '请输入密码' }]"
           />
         </van-cell-group>
           <br/>
-          <van-button round block icon="certificate" :disabled="disabled" type="primary" native-type="submit" style="width: 80%; max-width: 320px">Login</van-button>
+          <van-button round block icon="certificate" :disabled="disabled" type="primary" native-type="submit" style="width: 80%; max-width: 320px">登录</van-button>
         </van-form>
       </div>
       <p style="font-size: 9pt; margin-top: 11pt">
-        Forget Username or Password? <br> You can
-        <router-link to="/findAccount" style="font-size: 9.5pt" >Query Username</router-link> or
-        <router-link to="/resetPassword" style="font-size: 9.5pt" >Reset Password</router-link>
+        忘记用户名或密码？<br>你可以
+        <router-link to="/findAccount" style="font-size: 9.5pt" >找回用户名</router-link>或
+        <router-link to="/resetPassword" style="font-size: 9.5pt" >重置密码</router-link>
       </p>
     </center>
   </div>
@@ -63,6 +63,7 @@
 <script>
 import Cookies from "js-cookie";
 import {showToast, showSuccessToast, showFailToast, showDialog  } from "vant";
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 
 export default {
@@ -91,7 +92,8 @@ export default {
   },
   methods: {
     onLogin() {
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.onSubmitLogin();
+      else this.isShow = true;
     },
     onSubmitLogin(){
       this.isShow = false;
@@ -103,19 +105,19 @@ export default {
       }).then((response) => {
         this.disabled = false;
         if(response.data.status === -2){
-          showFailToast('Username or Password Invalid');
+          showFailToast('用户名或密码错误');
           return;
         }
         if(response.data.status === -1){
-          showFailToast('The current account is still pending.');
+          showFailToast('账号仍在审核中');
           return;
         }
         if(response.data.status === 0){
-          showFailToast('Current account has been blocked, please contact customer service.');
+          showFailToast('账号已被限制，请联系管理员');
           return;
         }
         if(response.data.status > 3){
-          showToast('The current account is an administrator account, please go to the backstage.');
+          showToast('管理员账号请前往管理后台登录');
           return;
         }
         Cookies.set('token', response.data.data);
@@ -125,18 +127,18 @@ export default {
           this.$router.push('/main');
         if(response.data.status === 1){
           showDialog({
-            title: 'Account Restrictions',
-            message: 'Hello, we are very sorry to inform you that due to your repeated participation but absence, you are temporarily unable to participate in our activities directly or by alternate, and no designated account transfer, and are only allowed to participate through designated account transfer. Please contact our customer service for a solution!',
-            confirmButtonText: 'I Understand'
+            title: '账号参加活动受限',
+            message: '由于多次报名后缺席，你暂时无法直接报名或候补，只能通过指定转让参加活动。如需恢复，请联系俱乐部管理员。',
+            confirmButtonText: '我知道了'
           }).then(() => {
             // on close
           });
         }else{
-          showSuccessToast('Login Successfully');
+          showSuccessToast('登录成功');
         }
       }).catch((error) => {
             console.log(error);
-            showFailToast('Internet Error');
+            showFailToast('网络异常，请稍后重试');
         this.disabled = false;
           }
       );

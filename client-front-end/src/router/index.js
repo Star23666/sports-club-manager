@@ -15,49 +15,49 @@ const routes = [
     path: '/login',
     name: 'login',
     component: LoginView,
-    meta: {title: 'Login with Password'}
+    meta: {title: '账号密码登录'}
   },
   {
     path: '/inbox',
     name: 'inbox',
     component: LoginInbox,
-    meta: {title: 'Club Portal'}
+    meta: {title: '体育俱乐部'}
   },
   {
     path: '/register',
     name: 'register',
     component: RegisterView,
-    meta: {title: 'Create a Account'}
+    meta: {title: '注册账号'}
   },
   {
     path: '/findAccount',
     name: 'findAccount',
     component: () => import('../views/FindAccount.vue'),
-    meta: {title: 'Query Username'}
+    meta: {title: '找回用户名'}
   },
   {
     path: '/adminFindAccount',
     name: 'adminFindAccount',
     component: () => import('../views/FindAccount.vue'),
-    meta: {title: 'Club Portal - Account Query'}
+    meta: {title: '找回用户名 · 体育俱乐部'}
   },
   {
     path: '/resetPassword',
     name: 'resetPassword',
     component: () => import('../views/ResetPassword.vue'),
-    meta: {title: 'Reset Password'}
+    meta: {title: '重置密码'}
   },
   {
     path: '/adminResetPassword',
     name: 'adminResetPassword',
     component: () => import('../views/ResetPassword.vue'),
-    meta: {title: 'Club Portal - Password Reset'}
+    meta: {title: '重置密码 · 体育俱乐部'}
   }
   ,{
     path: '/main',
     name: 'MemberHomeView',
     component: HomeView,
-    meta: {title: 'Club Portal'},
+    meta: {title: '体育俱乐部'},
     children: [
       { path: '',
         redirect: '/main/action'},
@@ -76,7 +76,7 @@ const routes = [
     path:'/staff',
     name: 'StaffHomeView',
     component: StaffHomeView,
-    meta: {title: 'Stuff Duty System'},
+    meta: {title: '工作人员值班'},
     children: [
       { path: 'membership',
         name: 'staff_membership',
@@ -91,11 +91,11 @@ const routes = [
     path: '/staff/scan',
     name: 'StaffScanView',
     component: () => import('../views/StaffViews/StaffScanView.vue'),
-    meta: {title: 'Verification'}
+    meta: {title: '签到核验'}
   },
   {
     path: '/:catchAll(.*)',
-    meta: {title: '404 Not Found'},
+    meta: {title: '页面不存在'},
     component: () => import('../views/404.vue')
   }
 ]

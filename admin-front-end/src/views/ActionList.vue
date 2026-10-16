@@ -3,70 +3,70 @@
   <lay-layer v-model="disabled" type="3" shade-close="false"/>
   <lay-layer v-model="editActionShow" :title="editActionTitle" :area="[area_width, area_height]"  z-index="1000">
     <lay-form :model="actionInf" required>
-      <lay-quote>Basic Information (Non-Editable After the Release)</lay-quote>
-      <lay-form-item label="Name" style="margin-top: 15pt" :key="area_key">
+      <lay-quote>基本信息（发布后不可修改）</lay-quote>
+      <lay-form-item label="活动名称" style="margin-top: 15pt" :key="area_key">
         <lay-input :disabled="actionInf.state > 1" v-model="actionInf.title" style="width: 400px"></lay-input>
       </lay-form-item>
-      <lay-form-item label="Place">
+      <lay-form-item label="地点">
         <lay-input :disabled="actionInf.state > 1" v-model="actionInf.place" style="width: 400px"></lay-input>
       </lay-form-item>
-      <lay-form-item label="Date">
+      <lay-form-item label="日期">
         <lay-input :disabled="actionInf.state > 1" v-model="actionInf.date" style="width: 400px"></lay-input>
       </lay-form-item>
-      <lay-form-item label="Time">
+      <lay-form-item label="时间">
         <lay-input :disabled="actionInf.state > 1" v-model="actionInf.time_range" style="width: 400px"></lay-input>
       </lay-form-item>
-      <lay-form-item label="Maximum">
+      <lay-form-item label="人数上限">
         <lay-input-number :disabled="actionInf.state > 1" v-model="actionInf.max_num" min="1" max="40"></lay-input-number>
       </lay-form-item>
-      <lay-quote>Duty Information (Non-Editable After the Start)</lay-quote>
-      <lay-form-item label="Duty Stuff">
-        <lay-select :disabled="actionInf.state > 3" v-model="actionInf.staff_user_id" placeholder="請選擇" style="width: 210pt">
+      <lay-quote>值班信息（活动开始后不可修改）</lay-quote>
+      <lay-form-item label="负责工作人员">
+        <lay-select :disabled="actionInf.state > 3" v-model="actionInf.staff_user_id" placeholder="请选择" style="width: 210pt">
           <template #header>
             <div style="padding: 10px">
-              <lay-input placeholder="Name" prefix-icon="layui-icon-search" v-model="search_name" @input="onQueryNameChange"></lay-input>
+              <lay-input placeholder="搜索姓名" prefix-icon="layui-icon-search" v-model="search_name" @input="onQueryNameChange"></lay-input>
             </div>
           </template>
-          <lay-select-option v-if="actionInf.staff_user_id === -1" :value="-1" label="請選擇"></lay-select-option>
-          <lay-select-option v-for="item in queryUserList" :value="item.id">{{item.name}}({{item.student_id}}, {{item.unsigned_num}} on Duty)</lay-select-option>
+          <lay-select-option v-if="actionInf.staff_user_id === -1" :value="-1" label="请选择"></lay-select-option>
+          <lay-select-option v-for="item in queryUserList" :value="item.id">{{item.name}}（{{item.student_id}}，值班 {{item.unsigned_num}} 次）</lay-select-option>
           <template #footer>
-            <center v-if="queryUserList.length >= 5" style="font-size: 8pt">Display up to 5 records, please search for rest.</center>
+            <center v-if="queryUserList.length >= 5" style="font-size: 8pt">最多显示 5 条，请搜索其他人员。</center>
           </template>
         </lay-select>
       </lay-form-item>
-      <lay-form-item label="Wechat Group">
+      <lay-form-item label="活动微信群">
         <div class="file-upload-wrapper" >
           <input :disabled="actionInf.state > 3" type="file" id="file-upload" class="file-upload" @change="onFileChange" accept="image/*"/>
-          <label for="file-upload" :class="actionInf.state > 3 ? 'file-upload-label-disabled' : 'file-upload-label'"><lay-icon type="layui-icon-link"/> Upload QR Code</label>
+          <label for="file-upload" :class="actionInf.state > 3 ? 'file-upload-label-disabled' : 'file-upload-label'"><lay-icon type="layui-icon-link"/> 上传二维码</label>
         </div>
-        &nbsp;&nbsp;<p style="font-size: 9pt; color: gray; margin-left: 130pt; margin-top: -18pt">*with automatic recognition</p>
+        &nbsp;&nbsp;<p style="font-size: 9pt; color: gray; margin-left: 130pt; margin-top: -18pt">自动识别二维码内容</p>
         <div v-if="decodedResult" style="font-size: 10pt; margin-top: 8pt">QR Code is Uploaded:
-          <lay-button v-if="!qrcodeShow" size="xs" type="warm" @click="this.qrcodeShow = 1" prefix-icon="layui-icon-show">Preview</lay-button>
-          <lay-button v-else size="xs" type="danger" @click="this.qrcodeShow = 0" prefix-icon="layui-icon-reduce-circle" >Hide</lay-button>
+          <lay-button v-if="!qrcodeShow" size="xs" type="warm" @click="this.qrcodeShow = 1" prefix-icon="layui-icon-show">预览</lay-button>
+          <lay-button v-else size="xs" type="danger" @click="this.qrcodeShow = 0" prefix-icon="layui-icon-reduce-circle" >隐藏</lay-button>
           <br/>
           <lay-qrcode v-show="qrcodeShow" :text="actionInf.wechat_url"></lay-qrcode>
         </div>
-        <div v-else style="font-size: 10pt; margin-top: 5pt">The QR code does not exist or is not recognized!</div>
+        <div v-else style="font-size: 10pt; margin-top: 5pt">未识别到二维码，请重新上传。</div>
       </lay-form-item>
-      <lay-form-item label="Start Time">
-        <lay-date-picker :disabled="actionInf.state > 3" type="datetime" v-model="actionInf.open_time" placeholder="Allowable-Verification Time" readonly allowClear></lay-date-picker>
+      <lay-form-item label="开放签到时间">
+        <lay-date-picker :disabled="actionInf.state > 3" type="datetime" v-model="actionInf.open_time" placeholder="选择开放签到时间" readonly allowClear></lay-date-picker>
       </lay-form-item>
-      <lay-form-item label="Closed Time">
-        <lay-date-picker :disabled="actionInf.state > 3" type="datetime" v-model="actionInf.close_time" placeholder="Allowable-Terminate Time" readonly allowClear></lay-date-picker>
+      <lay-form-item label="允许结束时间">
+        <lay-date-picker :disabled="actionInf.state > 3" type="datetime" v-model="actionInf.close_time" placeholder="选择允许结束时间" readonly allowClear></lay-date-picker>
       </lay-form-item>
     </lay-form>
     <template #footer>
       <div style="text-align: left; margin-top: 10px; margin-left: 20px" v-if="actionInf.state <= 3">
-        <lay-button type="warm" @click="onReleaseSubmit()" v-if="actionInf.state === 1" prefix-icon="layui-icon-release"> Release Action</lay-button>
-        <lay-button type="danger" @click="onStopRegisterSubmit()" v-if="actionInf.state === 2" prefix-icon="layui-icon-lock"> Close Entry</lay-button>
-        <lay-button style="background-color: forestgreen; color: white" @click="onContinueReleaseAction()" v-if="actionInf.state === 3" prefix-icon="layui-icon-play"> Re-Open Entry</lay-button>
+        <lay-button type="warm" @click="onReleaseSubmit()" v-if="actionInf.state === 1" prefix-icon="layui-icon-release"> 发布活动</lay-button>
+        <lay-button type="danger" @click="onStopRegisterSubmit()" v-if="actionInf.state === 2" prefix-icon="layui-icon-lock"> 截止报名</lay-button>
+        <lay-button style="background-color: forestgreen; color: white" @click="onContinueReleaseAction()" v-if="actionInf.state === 3" prefix-icon="layui-icon-play"> 重新开放报名</lay-button>
       </div>
       <div style="text-align: right; margin-top: -37px;" v-if="actionInf.state < 4">
-        <lay-button @click="this.editActionShow = false"><lay-icon type="layui-icon-close"/> Close</lay-button>
-        <lay-button type="primary" style="margin-right: 20px" @click="onEditSubmit" :disabled="disabled"><lay-icon type="layui-icon-list"/> Save</lay-button>
+        <lay-button @click="this.editActionShow = false"><lay-icon type="layui-icon-close"/> 关闭</lay-button>
+        <lay-button type="primary" style="margin-right: 20px" @click="onEditSubmit" :disabled="disabled"><lay-icon type="layui-icon-list"/> 保存</lay-button>
       </div>
       <div style="text-align: right; margin-top: 5px;" v-if="actionInf.state === 4">
-        This action has started. you can, <a style="cursor: pointer; text-decoration: underline" @click="onStopAction">CLICK HERE TO TERMINATE</a>.&nbsp;&nbsp;&nbsp;
+        活动已开始。如需结束，请<a style="cursor: pointer; text-decoration: underline" @click="onStopAction">点击此处</a>。&nbsp;&nbsp;&nbsp;
       </div>
       <div style="text-align: right; margin-top: 5px;" v-if="actionInf.state === 5">
         This action has terminated, information is for reference only.&nbsp;&nbsp;&nbsp;
@@ -78,7 +78,7 @@
   <lay-layer v-model="queryMembersShow" :title="queryMemberTitle" :area="['700px', '500px']"  z-index="1000">
     <lay-table :columns="memberColumns" :data-source="memberDataSource" even height="433px" style="margin: 5px;">
       <template #empty>
-        <lay-empty description="No Records"></lay-empty>
+        <lay-empty description="暂无记录"></lay-empty>
       </template>
     </lay-table>
   </lay-layer>
@@ -94,37 +94,37 @@
       <lay-row>
         <lay-col md="24">
           <lay-breadcrumb style="margin-left: 6pt">
-            <lay-breadcrumb-item title="Actions"></lay-breadcrumb-item>
-            <lay-breadcrumb-item title="Management"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="活动"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="活动管理"></lay-breadcrumb-item>
           </lay-breadcrumb>
         </lay-col>
         <lay-col md="24" style="margin-top: 4pt">
-          <lay-input v-model="preQueryName" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="Action Name" prefix-icon="layui-icon-flag"></lay-input>
+          <lay-input v-model="preQueryName" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="活动名称" prefix-icon="layui-icon-flag"></lay-input>
           <lay-dropdown updateAtScroll>
-            <lay-button :disabled="loading" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-cols" >Status</lay-button>
+            <lay-button :disabled="loading" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-cols" >状态</lay-button>
             <template #content>
               <lay-dropdown-menu>
-                <lay-dropdown-menu-item @click="queryData(0)"><span v-if="query.state===0"><lay-icon type="layui-icon-ok"/></span> All Status</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(1)"><span v-if="query.state===1"><lay-icon type="layui-icon-ok"/></span> In Preparation</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(2)"><span v-if="query.state===2"><lay-icon type="layui-icon-ok"/></span> In Participating</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(3)"><span v-if="query.state===3"><lay-icon type="layui-icon-ok"/></span> Entry Closed</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(4)"><span v-if="query.state===4"><lay-icon type="layui-icon-ok"/></span> In Progress</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(5)"><span v-if="query.state===5"><lay-icon type="layui-icon-ok"/></span> Terminated</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(0)"><span v-if="query.state===0"><lay-icon type="layui-icon-ok"/></span> 全部状态</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(1)"><span v-if="query.state===1"><lay-icon type="layui-icon-ok"/></span> 准备中</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(2)"><span v-if="query.state===2"><lay-icon type="layui-icon-ok"/></span> 报名中</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(3)"><span v-if="query.state===3"><lay-icon type="layui-icon-ok"/></span> 报名已截止</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(4)"><span v-if="query.state===4"><lay-icon type="layui-icon-ok"/></span> 进行中</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(5)"><span v-if="query.state===5"><lay-icon type="layui-icon-ok"/></span> 已结束</lay-dropdown-menu-item>
               </lay-dropdown-menu>
             </template>
           </lay-dropdown>
-          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-1)" :disabled="loading">Query</lay-button>
+          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-1)" :disabled="loading">查询</lay-button>
         </lay-col>
       </lay-row>
     </template>
     <template #empty>
-      <lay-empty description="No Records"></lay-empty>
+      <lay-empty description="暂无记录"></lay-empty>
     </template>
     <template v-slot:operator="{ row, rowIndex }">
-      <lay-button size="xs" type="normal" :disabled="this.loading" @click="onEditShow(rowIndex)" v-if="row.state < 4"><lay-icon type="layui-icon-edit"/> Edit</lay-button>
-      <lay-button size="xs" type="primary" :disabled="this.loading" @click="onEditShow(rowIndex)" v-if="row.state > 3"><lay-icon type="layui-icon-eye"/> View</lay-button>
-      <lay-button size="xs" :disabled="this.loading" style="background: deeppink; color: white" @click="queryMemberData(rowIndex)"><lay-icon type="layui-icon-form"/> Query Participants </lay-button>
-      <lay-button size="xs" type="danger" :disabled="this.loading" @click="onDeleteSubmit(rowIndex)"><lay-icon type="layui-icon-delete"/> Delete</lay-button>
+      <lay-button size="xs" type="normal" :disabled="this.loading" @click="onEditShow(rowIndex)" v-if="row.state < 4"><lay-icon type="layui-icon-edit"/> 编辑</lay-button>
+      <lay-button size="xs" type="primary" :disabled="this.loading" @click="onEditShow(rowIndex)" v-if="row.state > 3"><lay-icon type="layui-icon-eye"/> 查看</lay-button>
+      <lay-button size="xs" :disabled="this.loading" style="background: deeppink; color: white" @click="queryMemberData(rowIndex)"><lay-icon type="layui-icon-form"/> 查看参加者 </lay-button>
+      <lay-button size="xs" type="danger" :disabled="this.loading" @click="onDeleteSubmit(rowIndex)"><lay-icon type="layui-icon-delete"/> 删除</lay-button>
     </template>
   </lay-table>
 </template>
@@ -173,22 +173,22 @@ export default {
         total: 0
       },
       columns:[
-        { title:"Name", width:"220px", resize:true, key:"title" },
-        { title:"Place", width:"200px", resize:true, key:"place" },
-        { title:"Date", width:"160px", resize:true, key:"date" },
-        { title:"Time", width:"160px", resize:true, key:"time_range"},
-        { title:"Maximum", width:"160px", resize:true, key:"max_num" },
-        { title:"Status", width:"160px", resize:true, key:"status_name" },
-        { title:"Operation" , width: "300px" , fixed: "right", customSlot:"operator", key:"operator", ignoreExport: true }
+        { title:"活动名称", width:"220px", resize:true, key:"title" },
+        { title:"地点", width:"200px", resize:true, key:"place" },
+        { title:"日期", width:"160px", resize:true, key:"date" },
+        { title:"时间", width:"160px", resize:true, key:"time_range"},
+        { title:"人数上限", width:"160px", resize:true, key:"max_num" },
+        { title:"状态", width:"160px", resize:true, key:"status_name" },
+        { title:"操作" , width: "300px" , fixed: "right", customSlot:"operator", key:"operator", ignoreExport: true }
       ],
       dataSource:[],
       memberDataSource:[],
       memberColumns:[
-        { title:"Name", width:"22%", resize:true, key:"name" },
-        { title:"Student ID", width:"22%", resize:true, key:"student_id" },
-        { title:"Phone", width:"22%", resize:true, key:"phone" },
-        { title:"Wechat", width:"22%", resize:true, key:"wechat_id"},
-        { title:"Racket", width:"12%", resize:true, key:"borrow_name" }],
+        { title:"姓名", width:"22%", resize:true, key:"name" },
+        { title:"学号", width:"22%", resize:true, key:"student_id" },
+        { title:"手机号", width:"22%", resize:true, key:"phone" },
+        { title:"微信号", width:"22%", resize:true, key:"wechat_id"},
+        { title:"球拍", width:"12%", resize:true, key:"borrow_name" }],
       editActionShow: false,
       queryMembersShow: false,
       disabled: false,
@@ -222,11 +222,11 @@ export default {
     },
     queryMemberData(val){
       this.loading = true;
-      this.queryMemberTitle = this.dataSource[val].title + ' — Participants'
+      this.queryMemberTitle = this.dataSource[val].title + ' — 参与者'
       this.$http.post(`/action/queryActionMembers?token=${Cookies.get('token')}&action_id=${this.dataSource[val].id}`)
           .then(res => {
             if(res.status !== 200){
-              layer.msg('System Error', {icon: 2, time: 1500});
+              layer.msg('系统异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
               return;
             }
@@ -246,7 +246,7 @@ export default {
             this.loading = false;
           })
           .catch(error => {
-            layer.msg('Internet Error', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.loading = false;
           })
 
@@ -266,7 +266,7 @@ export default {
 &page_size=${this.page.limit}&page_number=${this.page.current}`)
           .then(res => {
             if(res.status !== 200){
-              layer.msg('Internet Error', {icon: 2, time: 1500});
+              layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
               return;
             }
@@ -283,7 +283,7 @@ export default {
             this.loading = false;
           })
           .catch(error => {
-            layer.msg('Internet Error', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.loading = false;
           })
     },
@@ -291,28 +291,28 @@ export default {
       obj.status_name = '';
       switch(obj.state){
         case 1:
-          obj.status_name = 'In Preparation'; break;
+          obj.status_name = '准备中'; break;
         case 2:
-          obj.status_name = 'In Participating'; break;
+          obj.status_name = '报名中'; break;
         case 3:
-          obj.status_name = 'Entry Closed'; break;
+          obj.status_name = '报名已截止'; break;
         case 4:
-          obj.status_name = 'In Process'; break;
+          obj.status_name = '进行中'; break;
         case 5:
-          obj.status_name = 'Terminated';
+          obj.status_name = '已结束';
       }
     },
     computedMemberStatusName(obj){
       if(obj.borrow === 1)
-        obj.borrow_name = "Yes";
+        obj.borrow_name = "需要";
       else
-        obj.borrow_name = "No";
+        obj.borrow_name = "不需要";
     },
     onQueryNameChange(){
       this.$http.post(`/member/queryStaffMembers?token=${Cookies.get('token')}&select_id=${this.actionInf.staff_user_id}`, { name: this.search_name })
           .then(res => {
             if(res.status !== 200){
-              layer.msg('System Error', {icon: 2, time: 1500});
+              layer.msg('系统异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
               return;
             }
@@ -325,7 +325,7 @@ export default {
             this.queryUserList = res.data.data;
           })
           .catch(error => {
-            layer.msg('Internet Error', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.loading = false;
           })
     },
@@ -372,9 +372,9 @@ export default {
       this.decodedResult = this.actionInf.wechat_url;
       this.qrcodeShow = 0;
       if(this.actionInf.state > 3)
-        this.editActionTitle = "View";
+        this.editActionTitle = "查看活动";
       else
-        this.editActionTitle = "Edit";
+        this.editActionTitle = "编辑活动";
       this.editActionShow = true;
     },
     onEditSubmit(){
@@ -392,19 +392,19 @@ export default {
       else
         this.actionInf.submit_close_time = this.actionInf.close_time;
       if(this.actionInf.name === '' || this.actionInf.place === '' || this.actionInf.time_range === '' || this.actionInf.date === ''){
-        layer.msg('Basic information needs to be filled out completely', {icon: 7, time: 1500});
+        layer.msg('请填写完整的活动基本信息', {icon: 7, time: 1500});
         return;
       }
       if(this.actionInf.wechat_url === ''){
-        layer.msg('Please set up an event contact group', {icon: 7, time: 1500});
+        layer.msg('请设置活动联系群', {icon: 7, time: 1500});
         return;
       }
       if(this.actionInf.staff_user_id === -1){
-        layer.msg('Please designate a duty stuff for the event.', {icon: 7, time: 1500});
+        layer.msg('请指定活动值班人员。', {icon: 7, time: 1500});
         return;
       }
       if(this.actionInf.open_time === '' || this.actionInf.close_time === ''){
-        layer.msg('You need to specify the start and terminate times for the event.', {icon: 7, time: 1500});
+        layer.msg('请设置签到开放和结束时间。', {icon: 7, time: 1500});
         return;
       }
       this.disabled = true;
@@ -421,48 +421,48 @@ export default {
               if(res.data.status === -1){
                 this.disabled = false;
                 this.editActionShow = false;
-                layer.msg('The current activity has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                layer.msg('活动已删除，请刷新后重试。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 0){
                 this.editActionShow = false;
-                layer.msg('The current event has been released (open for registration), and it is not possible to change the basic information of the event.',{icon: 7, time: 1500});
+                layer.msg('活动已发布，不能修改基本信息。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 1){
                 this.editActionShow = false;
-                layer.msg('The current event has already started (terminated), you can not modify any event information.',{icon: 7, time: 1500});
+                layer.msg('活动已开始或结束，不能修改活动信息。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 2){
                 this.editActionShow = false;
-                layer.msg('The current duty stuff has been deleted, please reassign one.',{icon: 7, time: 1500});
+                layer.msg('值班人员账号已删除，请重新指定。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 3){
                 this.editActionShow = false;
-                layer.msg('The current duty stuff has been modified, please reassign one.',{icon: 7, time: 1500});
+                layer.msg('值班人员账号已变化，请重新指定。',{icon: 7, time: 1500});
                 return;
               }
               this.dataSource[this.currentIndex] = JSON.parse(JSON.stringify(this.actionInf));
               this.computedStatusName(this.dataSource[this.currentIndex]);
-              layer.msg('Save Successful!',{icon: 1, time: 1500});
+              layer.msg('保存成功！',{icon: 1, time: 1500});
             }else{
-              layer.msg('System Error',{icon: 1, time: 1500});
+              layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
             }
           })
           .catch(res => {
-            layer.msg('Internet Error', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.disabled = false;
           })
     },
     onDeleteSubmit(index){
-      layer.confirm(`Confirmation of deletion of action“${this.dataSource[index].title}”? Deletion will synchronize the deletion of all related records.`,
+      layer.confirm(`确定删除活动“${this.dataSource[index].title}”吗？相关记录也会一并删除，且无法恢复。`,
           {
-            title:"Query",
+            title:"确认删除",
             icon: 3,
             btn: [
-              {text:'Delete', callback: (id) => {
+              {text:'删除', callback: (id) => {
                   this.disabled = true;
                   layer.close(id);
                   this.$http.post(`/action/deleteAction?token=${Cookies.get('token')}&action_id=${this.dataSource[index].id}`)
@@ -475,27 +475,27 @@ export default {
                           if(res.data.status === -1){
                             this.disabled = false;
                             this.changePasswordShow = false;
-                            layer.msg('The current action has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                            layer.msg('活动已删除，请刷新后重试。',{icon: 7, time: 1500});
                             return;
                           }
                           this.disabled = false;
-                          layer.msg('Delete Successfully!',{icon: 1, time: 1500});
+                          layer.msg('删除成功！',{icon: 1, time: 1500});
                           if(this.dataSource.length === 1 && this.page.current > 1){
                             this.page.current = this.page.current - 1;
                           }
                           this.queryData();
                         }else{
-                          layer.msg('System Error',{icon: 1, time: 1500});
+                          layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
                         }
                       })
                       .catch(res => {
-                        layer.msg('Internet Error', {icon: 2, time: 1500})
+                        layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
                       })
 
                 }
               },
               {
-                text:'Cancel', callback: (id) => {
+                text:'取消', callback: (id) => {
                   layer.close(id);
                 }
               }
@@ -504,18 +504,18 @@ export default {
       );
     },
     onReleaseSubmit(){
-      layer.confirm(`Whether to confirm the release of the event “${this.actionInf.title}”, after the release of all members can participate, and the event base information can not be modified.`,
+      layer.confirm(`确定发布活动“${this.actionInf.title}”吗？发布后会员可以报名，活动基本信息将不能修改。`,
           {
-            title:"Query",
+            title:"确认发布",
             icon: 3,
             btn: [
-              {text:'Release', callback: (id) => {
+              {text:'发布', callback: (id) => {
                   this.onContinueReleaseAction();
                   layer.close(id);
                 }
               },
               {
-                text:'Cancel', callback: (id) => {
+                text:'取消', callback: (id) => {
                   layer.close(id);
                 }
               }
@@ -535,40 +535,40 @@ export default {
               if(res.data.status === -1){
                 this.disabled = false;
                 this.editActionShow = false;
-                layer.msg('The current action has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                layer.msg('活动已删除，请刷新后重试。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 0){
                 this.disabled = false;
                 this.editActionShow = false;
-                layer.msg('The current activity status has been opened (or closed) by stuff and cannot be opened, please refresh the page.',{icon: 7, time: 1500});
+                layer.msg('活动状态已由工作人员更改，请刷新页面。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 1){
                 this.disabled = false;
                 this.editActionShow = false;
-                layer.msg('The current activity status has been opened, please refresh the page and try again.',{icon: 7, time: 1500});
+                layer.msg('活动已开放，请刷新后重试。',{icon: 7, time: 1500});
                 return;
               }
               this.disabled = false;
               this.editActionShow = false;
-              layer.msg('Currently the event has been successfully opened',{icon: 1, time: 1500});
+              layer.msg('活动已成功发布',{icon: 1, time: 1500});
               this.queryData();
             }else{
-              layer.msg('System Error',{icon: 1, time: 1500});
+              layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
             }
           })
           .catch(res => {
-            layer.msg('Internet Error', {icon: 2, time: 1500})
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
           });
     },
     onStopRegisterSubmit(){
-      layer.confirm(`Are you confirming the closure of the entry event “${this.actionInf.title}”? This will disqualify the member from participating in the action and will erase the associated candidacy record.`,
+      layer.confirm(`确定截止活动“${this.actionInf.title}”的报名吗？候补记录会被清除，请先核对。`,
           {
-            title:"Query",
+            title:"确认截止报名",
             icon: 3,
             btn: [
-              {text:'Close', callback: (id) => {
+              {text:'截止报名', callback: (id) => {
                   this.disabled = true;
                   layer.close(id);
                   this.$http.post(`/action/stopRegisterAction?token=${Cookies.get('token')}&action_id=${this.actionInf.id}`)
@@ -581,31 +581,31 @@ export default {
                           if(res.data.status === -1){
                             this.disabled = false;
                             this.editActionShow = false;
-                            layer.msg('The current activity has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                            layer.msg('活动已删除，请刷新后重试。',{icon: 7, time: 1500});
                             return;
                           }
                           if(res.data.status === 0){
                             this.disabled = false;
                             this.editActionShow = false;
-                            layer.msg('The current activity status has changed, please refresh the page and try again.',{icon: 7, time: 1500});
+                            layer.msg('活动状态已变化，请刷新后重试。',{icon: 7, time: 1500});
                             return;
                           }
                           this.disabled = false;
                           this.editActionShow = false;
-                          layer.msg('Current Activity is Closed Entry Successful',{icon: 1, time: 1500});
+                          layer.msg('已截止报名',{icon: 1, time: 1500});
                           this.queryData();
                         }else{
-                          layer.msg('System Error',{icon: 1, time: 1500});
+                          layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
                         }
                       })
                       .catch(res => {
-                        layer.msg('Internet Error', {icon: 2, time: 1500})
+                        layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
                       })
 
                 }
               },
               {
-                text:'Cancel', callback: (id) => {
+                text:'取消', callback: (id) => {
                   layer.close(id);
                 }
               }
@@ -614,12 +614,12 @@ export default {
       );
     },
     onStopAction(){
-      layer.confirm(`Whether to confirm the termination of the action “${this.actionInf.title}”? This will prevent relative stuff from continuing to verify the QR codes?`,
+      layer.confirm(`确定结束活动“${this.actionInf.title}”吗？结束后工作人员将不能继续核验签到码。`,
           {
-            title:"Query",
+            title:"确认结束活动",
             icon: 3,
             btn: [
-              {text:'Terminate', callback: (id) => {
+              {text:'结束活动', callback: (id) => {
                   this.disabled = true;
                   layer.close(id);
                   this.$http.post(`/action/stopAction?token=${Cookies.get('token')}&action_id=${this.actionInf.id}`)
@@ -632,31 +632,31 @@ export default {
                           if(res.data.status === -1){
                             this.disabled = false;
                             this.editActionShow = false;
-                            layer.msg('The current action has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                            layer.msg('活动已删除，请刷新后重试。',{icon: 7, time: 1500});
                             return;
                           }
                           if(res.data.status === 0){
                             this.disabled = false;
                             this.editActionShow = false;
-                            layer.msg('The current action status has changed, please refresh the page and try again.',{icon: 7, time: 1500});
+                            layer.msg('活动状态已变化，请刷新后重试。',{icon: 7, time: 1500});
                             return;
                           }
                           this.disabled = false;
                           this.editActionShow = false;
-                          layer.msg('The current action has been terminated successfully!',{icon: 1, time: 1500});
+                          layer.msg('活动已结束！',{icon: 1, time: 1500});
                           this.queryData();
                         }else{
-                          layer.msg('System Error',{icon: 1, time: 1500});
+                          layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
                         }
                       })
                       .catch(res => {
-                        layer.msg('Internet Error', {icon: 2, time: 1500})
+                        layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
                       })
 
                 }
               },
               {
-                text:'Cancel', callback: (id) => {
+                text:'取消', callback: (id) => {
                   layer.close(id);
                 }
               }
