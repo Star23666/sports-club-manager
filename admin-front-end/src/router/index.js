@@ -124,7 +124,7 @@ router.beforeEach(async (to, from, next) => {
   if(to.name !== '404') {
     if(to.name !== 'Login' && Cookies.get('token') === undefined) {
       if(from.name !== 'Login' && from.path !== '/'){
-        layer.msg( "Current account has been logged out, please login again");
+        layer.msg("当前账号已退出，请重新登录");
       }
       next('/login');
     }
@@ -132,12 +132,12 @@ router.beforeEach(async (to, from, next) => {
       try{
         const response = await Service.post('/user/verify?token=' + Cookies.get('token'));
         if(response.status !== 200){
-          layer.msg("The status changed, please login again");
+          layer.msg("账号状态已变化，请重新登录");
           Cookies.remove('token');
           next('/login');
         }
         if(response.data.status <= 0){
-          layer.msg("The status changed, please login again");
+          layer.msg("账号状态已变化，请重新登录");
           Cookies.remove('token');
           next('/login');
         }
