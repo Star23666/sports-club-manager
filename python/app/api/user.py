@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 
 
 @router.post("/login")
-def login(username: str = Query(""), password: str = Body("", embed=True)):
+def login(username: str = Body("", embed=True), password: str = Body("", embed=True)):
     with tx() as conn:
         user = fetch_one(conn, f"select * from users where {sql_binary('username')}=:username", {"username": username})
         if not user:
@@ -38,30 +38,11 @@ def login(username: str = Query(""), password: str = Body("", embed=True)):
         return vo(state, token_value)
 
 
-@router.post("/loginByEquip")
-def login_by_equip(equip_id: str = Query("")):
-    with tx() as conn:
-        equip_md5 = encrypt_md5(equip_id)
-        equip = fetch_one(conn, "select * from equipment where equip_id=:equip_id", {"equip_id": equip_md5})
-        if not equip:
-            return vo(-2, "No Equipment")
-
-        user = fetch_one(conn, "select * from users where ID=:uid", {"uid": equip["user_id"]})
-        if not user:
-            return vo(-2, "No Equipment")
-
-        state = int(user.get("state") or 0)
-        token_value: str | None = None
-        if 0 < state < 4:
-            token_value = new_token()
-            out_time = datetime.now() + timedelta(hours=3)
-            exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user["id"]})
-            exec_one(
-                conn,
-                "insert into tokens(user_id, token, out_time) values (:uid, :token, :out_time)",
-                {"uid": user["id"], "token": token_value, "out_time": out_time},
-            )
-        return vo(state, token_value)
+@router.post("/loginByEquip", deprecated=True)
+def login_by_equip():
+    # A browser fingerprint is reproducible and cannot authenticate a person.
+    # Keep the old route explicit for clients, but never issue a token here.
+    return vo(-2, "Device-only login is disabled. Use your password.")
 
 
 @router.post("/verify")
@@ -96,7 +77,7 @@ def change_password(
 
 
 @router.post("/queryEquips")
-def query_equips(token: str = Depends(bearer_token), local: str = Query("")):
+def query_equips(token: str = Depends(bearer_token), local: str = Body("", embed=True)):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
         if status <= 0 or not user_view:
@@ -117,40 +98,10 @@ def query_equips(token: str = Depends(bearer_token), local: str = Query("")):
         return vo(2 if no_add else 1, equips)
 
 
-@router.post("/newEquipment")
-def new_equipment(
-    token: str = Depends(bearer_token),
-    equip_id: str = Query(""),
-    name: str = Query(""),
-    password: str = Body("", embed=True),
-):
-    with tx() as conn:
-        status, user_view = token_verify_member(conn, token)
-        if status <= 0 or not user_view:
-            return vo(-2, "Login Error")
-
-        user = fetch_one(conn, "select * from users where ID=:uid", {"uid": user_view["id"]})
-        if not user:
-            return vo(-2, "Login Error")
-
-        if not verify_user_password(conn, user, password):
-            return vo(-2, "Login Error")
-
-        equip_md5 = encrypt_md5(equip_id)
-        exists = fetch_one(conn, "select * from equipment where equip_id=:equip_id", {"equip_id": equip_md5})
-        if exists:
-            return vo(-1, "Equipment Registeded")
-
-        count = fetch_one(conn, "select count(*) as c from equipment where user_id=:uid", {"uid": user_view["id"]})
-        if count and int(count["c"]) >= 5:
-            return vo(0, "Full Equipment")
-
-        exec_one(
-            conn,
-            "insert into equipment(name, equip_id, user_id) values (:name, :equip_id, :uid)",
-            {"name": name, "equip_id": equip_md5, "uid": user_view["id"]},
-        )
-        return vo(1, "Successful!")
+@router.post("/newEquipment", deprecated=True)
+def new_equipment():
+    # No new fingerprint credentials while device-only login is disabled.
+    return vo(-2, "Device-only login is disabled. Use your password.")
 
 
 @router.post("/deleteEquipment")
@@ -175,9 +126,9 @@ def delete_equipment(token: str = Depends(bearer_token), id: int = Query(...)):
 def contact(
     token: str = Depends(bearer_token),
     origin_pass: str = Body("", embed=True),
-    email: str = Query(""),
-    phone: str = Query(""),
-    wechat_id: str = Query(""),
+    email: str = Body("", embed=True),
+    phone: str = Body("", embed=True),
+    wechat_id: str = Body("", embed=True),
 ):
     with tx() as conn:
         status, user_view = token_verify_member(conn, token)
@@ -211,14 +162,14 @@ def logout(token: str = Depends(bearer_token)):
 
 @router.post("/register")
 def register(
-    username: str = Query(""),
+    username: str = Body("", embed=True),
     password: str = Body("", embed=True),
-    name: str = Query(""),
-    card_id: str = Query(""),
-    phone: str = Query(""),
-    wechat_id: str = Query(""),
-    student_id: str = Query(""),
-    email: str = Query(""),
+    name: str = Body("", embed=True),
+    card_id: str = Body("", embed=True),
+    phone: str = Body("", embed=True),
+    wechat_id: str = Body("", embed=True),
+    student_id: str = Body("", embed=True),
+    email: str = Body("", embed=True),
 ):
     if not PASSWORD_PATTERN.match(password):
         return vo(-1, "Invalid Password Format")

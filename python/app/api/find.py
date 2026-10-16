@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Body, Query
+from fastapi import APIRouter, Body
 
 from ..db import exec_one, fetch_one, tx
 from ..email_service import send_reset_email
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/api/find", tags=["find"])
 
 
 @router.post("/queryUserName")
-def query_username(name: str = Query(""), student_id: str = Query("")):
+def query_username(name: str = Body("", embed=True), student_id: str = Body("", embed=True)):
     with tx() as conn:
         if not name.strip() or not student_id.strip():
             return vo(-1, "Not Found")
@@ -30,10 +30,10 @@ def query_username(name: str = Query(""), student_id: str = Query("")):
 
 @router.post("/sendResetEmail")
 def send_reset_email_api(
-    name: str = Query(""),
-    student_id: str = Query(""),
-    username: str = Query(""),
-    StudentEmail: int | None = Query(None),
+    name: str = Body("", embed=True),
+    student_id: str = Body("", embed=True),
+    username: str = Body("", embed=True),
+    StudentEmail: int | None = Body(None, embed=True),
 ):
     with tx() as conn:
         user = fetch_one(conn, "select * from users where username=:u", {"u": username})

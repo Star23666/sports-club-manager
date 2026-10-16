@@ -43,7 +43,8 @@ See `.env.example` for all options. Key settings:
 - Most endpoints: `POST` + non-secret query parameters → `{ "status": int, "data": ... }`
 - Token auth: `Authorization: Bearer <UUID token>` + tokens table + out_time. Query-string tokens are ignored.
 - Passwords: JSON request body; Argon2id for new/changed passwords. Legacy MD5 is upgraded after correct login.
-- Do not expose this API with real users yet: one-tap equipment login, sign-in codes, some personal information in query strings, and authorization boundaries still need review.
+- Device-only login and new device enrollment are disabled; existing devices can still be revoked. Sign-in codes and registration/contact/profile updates use JSON bodies.
+- Do not expose this API with real users yet: account-recovery rate limits, a complete authorization audit, and browser end-to-end tests are still pending.
 
 ## Docker
 

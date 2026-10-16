@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from .auth_transport import bearer_token
 
@@ -259,7 +259,7 @@ def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...))
 
 
 @router.post("/reSign")
-def resign(token: str = Depends(bearer_token), record_id: int = Query(...), sign_code: str = Query("")):
+def resign(token: str = Depends(bearer_token), record_id: int = Query(...), sign_code: str = Body("", embed=True)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
@@ -273,7 +273,7 @@ def resign(token: str = Depends(bearer_token), record_id: int = Query(...), sign
             return vo(0, "Signed")
 
         action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
-        if action and int(action.get("state") or 0) < 4:
+        if not action or int(action.get("state") or 0) < 4:
             return vo(1, "Action State Error")
 
         exec_one(conn, "update records set state=:s where id=:rid", {"s": 1, "rid": record_id})

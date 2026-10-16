@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from .auth_transport import bearer_token
 
@@ -34,6 +34,10 @@ def query_action_member(token: str = Depends(bearer_token), action_id: int = Que
             return vo(-2)
         if int(user.get("state") or 0) != 3:
             return vo(-1)
+
+        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        if not action or int(action.get("staff_user_id") or 0) != int(user["id"]):
+            return vo(2, "Staff Not Match")
 
         rows = fetch_all(conn, "select * from staff_member_view where action_id=:aid", {"aid": action_id})
         return vo(1, rows)
@@ -106,7 +110,7 @@ def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...))
 
 
 @router.post("/querySign")
-def query_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
+def query_sign(token: str = Depends(bearer_token), sign_code: str = Body("", embed=True)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -119,6 +123,8 @@ def query_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
             return vo(0)
 
         action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
+        if not action or int(action.get("staff_user_id") or 0) != int(user["id"]):
+            return vo(2, "Staff Not Match")
         mem = fetch_one(conn, "select * from user_view where ID=:id", {"id": record["user_id"]})
 
         values = {
@@ -130,11 +136,9 @@ def query_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
 
         if int(record.get("state") or 0) == 1:
             st = 1
-        elif action and int(action.get("staff_user_id") or 0) != int(user["id"]):
-            st = 2
-        elif action and int(action.get("state") or 0) < 4:
+        elif int(action.get("state") or 0) < 4:
             st = 3
-        elif action and int(action.get("state") or 0) == 5:
+        elif int(action.get("state") or 0) == 5:
             st = 4
         else:
             st = 5
@@ -143,7 +147,7 @@ def query_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
 
 
 @router.post("/finishSign")
-def finish_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
+def finish_sign(token: str = Depends(bearer_token), sign_code: str = Body("", embed=True)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
@@ -154,15 +158,15 @@ def finish_sign(token: str = Depends(bearer_token), sign_code: str = Query("")):
         record = fetch_one(conn, "select * from records where sign_code=:code", {"code": sign_code})
         if not record:
             return vo(0, "No Record")
-        if int(record.get("state") or 0) == 1:
-            return vo(1, "Finished Sign")
 
         action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
-        if action and int(action.get("staff_user_id") or 0) != int(user["id"]):
+        if not action or int(action.get("staff_user_id") or 0) != int(user["id"]):
             return vo(2, "Staff Not Match")
-        if action and int(action.get("state") or 0) < 4:
+        if int(record.get("state") or 0) == 1:
+            return vo(1, "Finished Sign")
+        if int(action.get("state") or 0) < 4:
             return vo(3, "Action no Begin")
-        if action and int(action.get("state") or 0) == 5:
+        if int(action.get("state") or 0) == 5:
             return vo(4, "Finished Action")
 
         exec_one(conn, "update records set state=:state where id=:rid", {"state": 1, "rid": record["id"]})

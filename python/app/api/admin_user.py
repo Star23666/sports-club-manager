@@ -14,7 +14,7 @@ router = APIRouter(prefix="/admin/api/user", tags=["admin-user"])
 
 
 @router.post("/login")
-def admin_login(username: str = Query(""), password: str = Body("", embed=True)):
+def admin_login(username: str = Body("", embed=True), password: str = Body("", embed=True)):
     with tx() as conn:
         status, token_value = login_common(conn, username, password, admin=True)
         return vo(status, token_value if status == 0 else None)
@@ -51,9 +51,9 @@ def change_password(token: str = Depends(bearer_token), origin_pass: str = Body(
 def contact(
     token: str = Depends(bearer_token),
     origin_pass: str = Body("", embed=True),
-    email: str = Query(""),
-    phone: str = Query(""),
-    wechat_id: str = Query(""),
+    email: str = Body("", embed=True),
+    phone: str = Body("", embed=True),
+    wechat_id: str = Body("", embed=True),
 ):
     with tx() as conn:
         status, user_view = token_verify_admin(conn, token)

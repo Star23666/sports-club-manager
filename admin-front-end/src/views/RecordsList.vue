@@ -155,7 +155,7 @@ export default {
                 layer.msg('Please enter the verification code and try again.',{icon: 7, time: 1500});
                 return;
               }
-              this.$http.post(`/action/reSign?token=${Cookies.get('token')}&record_id=${id}&sign_code=${data}`)
+              this.$http.post(`/action/reSign?token=${Cookies.get('token')}&record_id=${id}`, { sign_code: data })
                   .then(res => {
                     if(res.status === 200){
                       if(res.data.status === -2) {

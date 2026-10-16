@@ -148,7 +148,9 @@ export default {
         this.sendToStudentEmail();
         return;
       }
-      this.$http.post(`/find/sendResetEmail?student_id=${encodeURIComponent(this.student_id)}&name=${encodeURIComponent(this.student_name)}&username=${encodeURIComponent(this.username)}`, {}, {timeout: 10000})
+      this.$http.post('/find/sendResetEmail', {
+        student_id: this.student_id, name: this.student_name, username: this.username
+      }, {timeout: 10000})
           .then(response => {
             this.disabled = false;
             if(response.status !== 200){
@@ -287,7 +289,10 @@ export default {
     sendToStudentEmail(){
       this.isShow = false;
       this.disabled = true;
-      this.$http.post(`/find/sendResetEmail?student_id=${encodeURIComponent(this.student_id)}&name=${encodeURIComponent(this.student_name)}&username=${encodeURIComponent(this.username)}&StudentEmail=1`, {}, {timeout: 10000})
+      this.$http.post('/find/sendResetEmail', {
+        student_id: this.student_id, name: this.student_name,
+        username: this.username, StudentEmail: 1
+      }, {timeout: 10000})
           .then(response => {
             this.disabled = false;
             if(response.status !== 200){

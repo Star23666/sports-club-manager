@@ -124,17 +124,26 @@ export default {
     onDecodeHandler(data){
       this.sign_code = data;
       this.showQrCodeReader = false;
-      this.$http.post(`/staff/querySign?token=${Cookies.get('token')}&sign_code=${this.sign_code}`)
+      this.$http.post(`/staff/querySign?token=${Cookies.get('token')}`, { sign_code: this.sign_code })
           .then(response => {
             if(response.status !== 200){
               this.$router.push({path:'/staff'});
               showFailToast("System Error");
+              return;
             }
-            if(response.data.status < 0)
+            if(response.data.status < 0) {
               this.$staffVerify();
+              return;
+            }
             if(response.data.status === 0){
               this.$router.push({path:'/staff'});
               showFailToast("The current QR code information is invalid");
+              return;
+            }
+            if(response.data.status === 2){
+              this.$router.push({path:'/staff'});
+              showFailToast("You are not responsible for this action");
+              return;
             }
             else{
               this.actionInf = response.data.data.act_inf;
@@ -145,15 +154,6 @@ export default {
                 this.notice_messgae = "The current code has been signed";
                 showDialog({
                   message: 'The current QR code has been signed, this result is only used to verify the validity of this records',
-                  confirmButtonText: 'Ok'
-                }).then(() => {
-                  // on close
-                });
-              }
-              if(response.data.status === 2){
-                this.notice_messgae = "You are not the person in charge of the relative action and cannot sign in";
-                showDialog({
-                  message: 'You are not the person in charge of the action to which this code belongs and cannot sign in for it, this result is only used to verify the validity of this records!',
                   confirmButtonText: 'Ok'
                 }).then(() => {
                   // on close
@@ -196,7 +196,7 @@ export default {
     },
     onSignClick(){
       this.loading = true;
-      this.$http.post(`/staff/finishSign?token=${Cookies.get('token')}&sign_code=${this.sign_code}`)
+      this.$http.post(`/staff/finishSign?token=${Cookies.get('token')}`, { sign_code: this.sign_code })
           .then(response => {
             this.loading = false;
             if(response.status !== 200){

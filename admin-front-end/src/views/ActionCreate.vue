@@ -95,7 +95,7 @@ import {layer} from "@layui/layui-vue";
     },
     methods: {
       onQueryNameChange(){
-        this.$http.post(`/member/queryStaffMembers?token=${Cookies.get('token')}&name=${encodeURIComponent(this.search_name)}&select_id=${this.actionInf.staff_user_id}`)
+        this.$http.post(`/member/queryStaffMembers?token=${Cookies.get('token')}&select_id=${this.actionInf.staff_user_id}`, { name: this.search_name })
             .then(res => {
               if(res.status !== 200){
                 layer.msg('System Error', {icon: 2, time: 1500});
