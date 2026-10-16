@@ -135,7 +135,7 @@ bash start.sh
 → Open / 打开 <http://localhost:8081/docs> — backend live with SQLite.  
 → First administrator / 首位管理员：运行 `cd python && python -m app.bootstrap_admin`，按提示输入新密码（不会显示或写入命令历史）。旧版数据库若仍有公开的 `admin/admin`，此命令会要求设置新密码并轮换该账号。
 
-> 安全提示：旧版 MySQL 数据库请先执行 `ALTER TABLE users MODIFY password VARCHAR(255);` 和 `database/upgrade_recovery_rate_limit.sql`，再升级服务。新建数据库已包含限流表；SQLite 会自动建表。现有用户的 MD5 密码仅在正确登录时迁移为 Argon2；公开的旧版管理员密码不能登录，必须通过上述本机命令轮换。密码、签到码和注册、联系等个人资料经 JSON 请求体传递，会话令牌通过 `Authorization: Bearer` 请求头传递。设备免密登录与新增设备入口已停用，旧设备可撤销。账户找回入口现有数据库固定时间窗限流。隔离 MySQL 8.0 库中的迁移和限流已验收，但完整权限审计、MySQL 全流程及摄像头扫码验收仍未完成，不要公开部署真实用户数据。
+> 安全提示：旧版 MySQL 数据库请先执行 `ALTER TABLE users MODIFY password VARCHAR(255);`、`database/upgrade_recovery_rate_limit.sql` 和 `database/upgrade_login_rate_limit.sql`，再升级服务。新建数据库已包含限流表；SQLite 会自动建表。现有用户的 MD5 密码仅在正确登录时迁移为 Argon2；公开的旧版管理员密码不能登录，必须通过上述本机命令轮换。密码、签到码和注册、联系等个人资料经 JSON 请求体传递，会话令牌通过 `Authorization: Bearer` 请求头传递。设备免密登录与新增设备入口已停用，旧设备可撤销。账户找回和登录入口采用数据库固定时间窗限流。隔离 MySQL 8.0 库的迁移、全流程和并发名额测试已验收，但完整权限审计和真实摄像头扫码验收仍未完成，不要公开部署真实用户数据。
 
 **Requirements / 环境要求:** Python 3.10+. That's it. No Docker, MySQL, or Node.js needed.
 
@@ -294,6 +294,8 @@ Frontend builds / 前端构建：分别在 `client-front-end` 和 `admin-front-e
 | Password hashing / 密码哈希 | 新密码使用 Argon2id；旧 MD5 在成功登录后升级 | 先轮换旧版公开管理员密码 |
 | Auth / 认证 | UUID v4 token, 3h expiry；`Authorization: Bearer` 请求头；设备免密登录暂时停用 | 仍需完整权限审计，不可公开部署真实用户数据 |
 | Account recovery / 账户找回 | 用户名查询、重置邮件和重置码提交按来源 IP 与账号/验证码分别限流，计数保存在数据库 | MySQL 旧库先建 `recovery_rate_limit` 表；反向代理后按直连地址限流，需评估共享 IP 的影响 |
+| Login / 登录 | 会员与管理员共用登录计数器；账号每 15 分钟默认 8 次、直连来源每 15 分钟默认 120 次；成功登录清除账号计数 | MySQL 旧库先执行 `upgrade_login_rate_limit.sql`；代理共享 IP 可能共用来源配额，需按实际部署调整 |
+| Capacity / 名额 | 同一活动的报名、候补与取消在数据库事务中串行处理；满额检查用当前读 | SQLite 并发测试和一次性 MySQL 8.0 并发测试通过；仍需真实流量压测 |
 | Sensitive data transport / 敏感数据传输 | 密码、签到码及注册/联系资料在 JSON 请求体中 | 部署时必须使用 HTTPS；其余接口仍需审计 |
 | CORS | 显式配置 `CORS_ORIGINS` | 部署前设置实际前端域名 |
 | SMTP | STARTTLS on port 587 | Use app-specific passwords |

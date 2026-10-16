@@ -55,17 +55,32 @@ if settings.is_sqlite:
 
 
 @contextmanager
-def tx() -> Iterator[Connection]:
+def tx(*, immediate: bool = False) -> Iterator[Connection]:
     with engine.begin() as conn:
+        # SQLite has no row-level SELECT FOR UPDATE. Reserve its single writer
+        # before reading the capacity, rather than trying to upgrade a stale
+        # read transaction after another request has enrolled.
+        if immediate and DB_IS_SQLITE:
+            conn.exec_driver_sql("BEGIN IMMEDIATE")
         yield conn
 
 
-def fetch_one(conn: Connection, sql: str, params: dict | None = None) -> dict | None:
+def lock_action(conn: Connection, action_id: int) -> dict | None:
+    """Serialize capacity decisions for one action within the caller's tx."""
+    suffix = "" if DB_IS_SQLITE else " for update"
+    return fetch_one(conn, f"select * from actions where ID=:id{suffix}", {"id": action_id})
+
+
+def fetch_one(conn: Connection, sql: str, params: dict | None = None, *, for_update: bool = False) -> dict | None:
+    if for_update and not DB_IS_SQLITE:
+        sql += " for update"
     row = conn.execute(text(sql), params or {}).mappings().first()
     return normalize_row(row) if row else None
 
 
-def fetch_all(conn: Connection, sql: str, params: dict | None = None) -> list[dict]:
+def fetch_all(conn: Connection, sql: str, params: dict | None = None, *, for_update: bool = False) -> list[dict]:
+    if for_update and not DB_IS_SQLITE:
+        sql += " for update"
     rows = conn.execute(text(sql), params or {}).mappings().all()
     return [normalize_row(r) for r in rows]
 

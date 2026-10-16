@@ -91,6 +91,10 @@ export default {
           layer.msg('用户名或密码错误', { icon : 2, time: 1500});
           return;
         }
+        if(response.data.status === -3){
+          layer.msg('登录尝试过多，请稍后再试', { icon : 7, time: 1500});
+          return;
+        }
         if(response.data.status === -1){
           layer.msg('当前账号不是管理员', { icon : 7, time: 1500});
           return;

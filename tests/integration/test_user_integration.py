@@ -9,6 +9,9 @@ from app import main as app_main
 from app.utils import encrypt_md5
 from app.passwords import LEGACY_DEFAULT_ADMIN_HASH
 from app.api import find as find_api
+from app import rate_limit as rate_limit_module
+from app.settings import settings
+from app.passwords import hash_password
 
 
 @pytest.fixture
@@ -73,6 +76,15 @@ def integration_client(tmp_path, monkeypatch):
         )
         conn.exec_driver_sql(
             """
+            CREATE TABLE login_rate_limit (
+                bucket_key TEXT PRIMARY KEY,
+                window_start INTEGER NOT NULL,
+                hits INTEGER NOT NULL
+            )
+            """
+        )
+        conn.exec_driver_sql(
+            """
             CREATE TABLE user_view (
                 ID INTEGER PRIMARY KEY,
                 username TEXT,
@@ -115,6 +127,54 @@ def test_register_duplicate_then_reject(integration_client):
     r2 = integration_client.post("/api/user/register", json=params)
     assert r2.status_code == 200
     assert r2.json()["status"] == -1
+
+
+def test_member_and_admin_share_login_attempt_limit(integration_client, monkeypatch):
+    monkeypatch.setattr(settings, "login_account_limit", 2)
+    monkeypatch.setattr(settings, "login_ip_limit", 20)
+    monkeypatch.setattr(settings, "login_window_seconds", 900)
+    now = [1800]
+    monkeypatch.setattr(rate_limit_module.time, "time", lambda: now[0])
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("limit-member", hash_password("Aa1$abcd"), 2),
+        )
+
+    wrong = {"username": "limit-member", "password": "wrong"}
+    assert integration_client.post("/api/user/login", json=wrong).json()["status"] == -2
+    assert integration_client.post("/admin/api/user/login", json=wrong).json()["status"] == -2
+    assert integration_client.post("/api/user/login", json=wrong).json()["status"] == -3
+    # A correct password cannot bypass an active account window.
+    assert integration_client.post(
+        "/api/user/login", json={"username": "limit-member", "password": "Aa1$abcd"}
+    ).json()["status"] == -3
+
+    now[0] += 901
+    assert integration_client.post(
+        "/api/user/login", json={"username": "limit-member", "password": "Aa1$abcd"}
+    ).json()["status"] == 2
+    with db_module.engine.begin() as conn:
+        assert conn.exec_driver_sql("select count(*) from login_rate_limit").scalar_one() == 1
+
+
+def test_login_ip_limit_ignores_untrusted_forwarded_header(integration_client, monkeypatch):
+    monkeypatch.setattr(settings, "login_account_limit", 20)
+    monkeypatch.setattr(settings, "login_ip_limit", 2)
+    monkeypatch.setattr(settings, "login_window_seconds", 900)
+    for index in range(2):
+        response = integration_client.post(
+            "/api/user/login",
+            json={"username": f"missing-{index}", "password": "wrong"},
+            headers={"X-Forwarded-For": f"203.0.113.{index + 1}"},
+        )
+        assert response.json()["status"] == -2
+    blocked = integration_client.post(
+        "/admin/api/user/login",
+        json={"username": "another-missing", "password": "wrong"},
+        headers={"X-Forwarded-For": "203.0.113.99"},
+    )
+    assert blocked.json()["status"] == -3
 
 
 def test_verify_with_valid_token(integration_client):

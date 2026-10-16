@@ -1,4 +1,4 @@
-"""Database-backed, fixed-window limits for account recovery requests.
+"""Database-backed, fixed-window limits for recovery and login requests.
 
 The database upsert is atomic, so counters are shared across API workers.
 Only a SHA-256 digest of the bucket subject is stored, never the raw IP or ID.
@@ -11,12 +11,14 @@ import time
 
 from sqlalchemy.engine import Connection
 
-from .db import DB_IS_SQLITE, exec_one, fetch_one
+from .db import DB_IS_SQLITE, exec_one, fetch_one, tx
+from .settings import settings
 
 
-def allow_recovery_attempt(
+def _allow_attempt(
     conn: Connection,
     *,
+    table: str,
     scope: str,
     subject: str,
     limit: int,
@@ -35,31 +37,70 @@ def allow_recovery_attempt(
     if DB_IS_SQLITE:
         exec_one(
             conn,
-            "insert into recovery_rate_limit(bucket_key, window_start, hits) values (:key, :window, 1) "
+            f"insert into {table}(bucket_key, window_start, hits) values (:key, :window, 1) "
             "on conflict(bucket_key) do update set "
-            "hits = case when recovery_rate_limit.window_start = excluded.window_start "
-            "then recovery_rate_limit.hits + 1 else 1 end, "
+            f"hits = case when {table}.window_start = excluded.window_start "
+            f"then {table}.hits + 1 else 1 end, "
             "window_start = excluded.window_start",
             params,
         )
     else:
         exec_one(
             conn,
-            "insert into recovery_rate_limit(bucket_key, window_start, hits) values (:key, :window, 1) "
+            f"insert into {table}(bucket_key, window_start, hits) values (:key, :window, 1) "
             "on duplicate key update "
             "hits = if(window_start = values(window_start), hits + 1, 1), "
             "window_start = values(window_start)",
             params,
         )
 
-    row = fetch_one(conn, "select hits from recovery_rate_limit where bucket_key=:key", {"key": bucket_key})
+    row = fetch_one(conn, f"select hits from {table} where bucket_key=:key", {"key": bucket_key})
     exec_one(
         conn,
-        "delete from recovery_rate_limit where window_start < :cutoff",
+        f"delete from {table} where window_start < :cutoff",
         {"cutoff": timestamp - 86400},
     )
     # Fail closed if the row cannot be read. An SQL exception also aborts the request.
     return bool(row and int(row["hits"]) <= limit)
+
+
+def allow_recovery_attempt(
+    conn: Connection, *, scope: str, subject: str, limit: int, window_seconds: int, now: int | None = None
+) -> bool:
+    return _allow_attempt(
+        conn, table="recovery_rate_limit", scope=scope, subject=subject,
+        limit=limit, window_seconds=window_seconds, now=now,
+    )
+
+
+def allow_login_attempt(
+    conn: Connection, *, scope: str, subject: str, limit: int, window_seconds: int, now: int | None = None
+) -> bool:
+    """Reserve one attempt atomically before expensive password verification."""
+    return _allow_attempt(
+        conn, table="login_rate_limit", scope=scope, subject=subject,
+        limit=limit, window_seconds=window_seconds, now=now,
+    )
+
+
+def clear_login_account_attempts(conn: Connection, username: str) -> None:
+    """Successful authentication clears only this account's bucket, not its IP's."""
+    key = hashlib.sha256(f"login-account\0{username.casefold()}".encode("utf-8")).hexdigest()
+    exec_one(conn, "delete from login_rate_limit where bucket_key=:key", {"key": key})
+
+
+def reserve_login_request(request, username: str) -> bool:
+    """Share account and direct-peer limits across member and admin logins."""
+    with tx() as conn:
+        ip_allowed = allow_login_attempt(
+            conn, scope="login-ip", subject=recovery_client_ip(request),
+            limit=settings.login_ip_limit, window_seconds=settings.login_window_seconds,
+        )
+        account_allowed = allow_login_attempt(
+            conn, scope="login-account", subject=username.casefold(),
+            limit=settings.login_account_limit, window_seconds=settings.login_window_seconds,
+        )
+    return ip_allowed and account_allowed
 
 
 def recovery_client_ip(request) -> str:
