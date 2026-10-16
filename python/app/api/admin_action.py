@@ -4,7 +4,7 @@ from fastapi import APIRouter, Body, Depends, Query
 
 from .auth_transport import bearer_token
 
-from ..db import exec_one, fetch_all, fetch_one, tx
+from ..db import exec_one, fetch_all, fetch_one, lock_action, tx
 from ..response import vo
 from ..utils import parse_maybe_datetime
 from .common import token_verify_admin
@@ -227,12 +227,12 @@ def stop_register_action(token: str = Depends(bearer_token), action_id: int = Qu
 
 @router.post("/stopAction")
 def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action:
             return vo(-1, "No Action")
 
@@ -269,19 +269,25 @@ def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...))
 
 @router.post("/reSign")
 def resign(token: str = Depends(bearer_token), record_id: int = Query(...), sign_code: str = Body("", embed=True)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        record = fetch_one(conn, "select * from records where ID = :rid and sign_code = :sc", {"rid": record_id, "sc": sign_code})
-        if not record:
+        record_ref = fetch_one(conn, "select action_id from records where ID = :rid and sign_code = :sc", {"rid": record_id, "sc": sign_code})
+        if not record_ref:
             return vo(-1, "Not Find")
 
+        action = lock_action(conn, record_ref["action_id"])
+        record = fetch_one(
+            conn, "select * from records where ID = :rid and sign_code = :sc",
+            {"rid": record_id, "sc": sign_code}, for_update=True,
+        )
+        if not record:
+            return vo(-1, "Not Find")
         if int(record.get("state") or 0) == 1:
             return vo(0, "Signed")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
         if not action or int(action.get("state") or 0) < 4:
             return vo(1, "Action State Error")
 

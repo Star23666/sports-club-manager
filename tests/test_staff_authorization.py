@@ -4,7 +4,7 @@ from app.api import staff as staff_api
 
 
 @contextmanager
-def _fake_tx():
+def _fake_tx(*, immediate=False):
     yield object()
 
 
@@ -33,7 +33,7 @@ def test_wrong_staff_cannot_read_qr_member_or_complete_sign(client, monkeypatch)
     monkeypatch.setattr(staff_api, "tx", _fake_tx)
     monkeypatch.setattr(staff_api, "token_verify_member", lambda *_: (1, {"id": 7, "state": 3}))
 
-    def fake_fetch_one(_conn, sql, _params):
+    def fake_fetch_one(_conn, sql, _params, **_kwargs):
         if "from records" in sql:
             return {"id": 20, "action_id": 12, "user_id": 2, "state": 0}
         if "from actions" in sql:
@@ -41,6 +41,7 @@ def test_wrong_staff_cannot_read_qr_member_or_complete_sign(client, monkeypatch)
         raise AssertionError("member data leaked")
 
     monkeypatch.setattr(staff_api, "fetch_one", fake_fetch_one)
+    monkeypatch.setattr(staff_api, "lock_action", lambda *_args, **_kwargs: {"id": 12, "staff_user_id": 8, "state": 4})
     monkeypatch.setattr(staff_api, "exec_one", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("record changed")))
     headers = {"Authorization": "Bearer staff"}
     query = client.post("/api/staff/querySign", headers=headers, json={"sign_code": "code"})
