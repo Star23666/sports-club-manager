@@ -296,6 +296,7 @@ Frontend builds / 前端构建：分别在 `client-front-end` 和 `admin-front-e
 | Account recovery / 账户找回 | 用户名查询、重置邮件和重置码提交按来源 IP 与账号/验证码分别限流，计数保存在数据库 | MySQL 旧库先建 `recovery_rate_limit` 表；反向代理后按直连地址限流，需评估共享 IP 的影响 |
 | Login / 登录 | 会员与管理员共用登录计数器；账号每 15 分钟默认 8 次、直连来源每 15 分钟默认 120 次；成功登录清除账号计数 | MySQL 旧库先执行 `upgrade_login_rate_limit.sql`；代理共享 IP 可能共用来源配额，需按实际部署调整 |
 | Capacity / 名额 | 同一活动的报名、候补与取消在数据库事务中串行处理；满额检查用当前读 | SQLite 并发测试和一次性 MySQL 8.0 并发测试通过；仍需真实流量压测 |
+| Transfer / 名额转让 | 公开转让只允许一人成功领取；指定转让仅限指定会员接受或拒绝，同一活动内使用事务锁与当前读 | SQLite 和一次性 MySQL 8.0 并发测试通过；尚未做真实流量压测 |
 | Sensitive data transport / 敏感数据传输 | 密码、签到码及注册/联系资料在 JSON 请求体中 | 部署时必须使用 HTTPS；其余接口仍需审计 |
 | CORS | 显式配置 `CORS_ORIGINS` | 部署前设置实际前端域名 |
 | SMTP | STARTTLS on port 587 | Use app-specific passwords |

@@ -113,3 +113,61 @@ def test_mysql_login_counter_resets_after_window_and_success():
             conn, scope="login-account", subject="mysql-capacity-test", limit=2,
             window_seconds=60, now=181,
         )
+
+
+@pytest.mark.skipif(
+    os.getenv("TEST_MYSQL_CAPACITY") != "1" or DB_IS_SQLITE,
+    reason="requires an explicitly selected disposable MySQL database",
+)
+def test_mysql_public_transfer_has_one_winner():
+    if not settings.db_name.startswith("club_capacity_test_"):
+        pytest.fail("refusing to run against a non-disposable MySQL database")
+
+    run_id = uuid4().hex[:8]
+    names = [f"transfer-{run_id}-{index}" for index in range(3)]
+    tokens = [f"transfer-token-{run_id}-{index}" for index in range(3)]
+    with tx() as conn:
+        user_ids = []
+        for name, token in zip(names, tokens):
+            exec_one(conn, "insert into users(username, password, state) values (:name, 'test-only', 2)", {"name": name})
+            user = fetch_one(conn, "select ID from users where username=:name", {"name": name})
+            user_ids.append(user["id"])
+            exec_one(
+                conn, "insert into tokens(user_id, token, out_time) values (:uid, :token, :expiry)",
+                {"uid": user["id"], "token": token, "expiry": datetime.now() + timedelta(hours=1)},
+            )
+        exec_one(conn, "insert into actions(title, state, max_num) values (:title, 3, 1)", {"title": names[0]})
+        action = fetch_one(conn, "select ID from actions where title=:title", {"title": names[0]})
+        exec_one(
+            conn, "insert into records(user_id, action_id, sign_code, state) values (:uid, :aid, :code, 0)",
+            {"uid": user_ids[0], "aid": action["id"], "code": f"transfer-old-{run_id}"},
+        )
+        record = fetch_one(conn, "select ID from records where action_id=:aid", {"aid": action["id"]})
+        exec_one(
+            conn, "insert into transfer(record_id, send_user_id, receive_user_id) values (:rid, :uid, :uid)",
+            {"rid": record["id"], "uid": user_ids[0]},
+        )
+        transfer = fetch_one(conn, "select ID from transfer where record_id=:rid", {"rid": record["id"]})
+
+    barrier = Barrier(2)
+
+    def claim(token):
+        with TestClient(app) as client:
+            barrier.wait(timeout=10)
+            response = client.post(
+                f"/api/transfer/acceptTransfer?transfer_id={transfer['id']}",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert response.status_code == 200
+            return token, response.json()["status"]
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(claim, tokens[1:]))
+    assert sorted(status for _, status in outcomes) == [-1, 2]
+    winner = next(token for token, status in outcomes if status == 2)
+    with tx() as conn:
+        owner = fetch_one(
+            conn, "select r.user_id from records r where r.ID=:rid", {"rid": record["id"]},
+        )
+        assert owner["user_id"] == user_ids[tokens.index(winner)]
+        assert fetch_one(conn, "select count(*) as c from transfer where ID=:id", {"id": transfer["id"]})["c"] == 0
