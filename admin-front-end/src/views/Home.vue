@@ -243,6 +243,10 @@ export default {
           phone: this.changeInf.phone, wechat_id: this.changeInf.wechat_id
         })
             .then(response =>{
+              if(response.data.status === -3){
+                layer.msg(response.data.data || '联系方式格式不正确', {icon: 2, time: 1500});
+                return;
+              }
               if(response.data.status <= 0){
                 layer.msg('账号状态异常', {icon: 2, time: 1500});
               }

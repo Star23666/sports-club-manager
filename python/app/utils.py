@@ -13,6 +13,17 @@ USERNAME_PATTERN = re.compile(r"[A-Za-z0-9]{1,100}")
 EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$")
 
 
+def contact_validation_error(phone: str, wechat_id: str, email: str) -> str | None:
+    for label, value in (("手机号", phone), ("微信号", wechat_id)):
+        if not value.strip():
+            return f"请填写{label}"
+        if len(value) > 100:
+            return f"{label}不能超过100个字符"
+    if email and (len(email) > 100 or not EMAIL_PATTERN.fullmatch(email)):
+        return "邮箱格式不正确或超过100个字符"
+    return None
+
+
 def encrypt_md5(input_str: str) -> str:
     # Re-implement backend-system MD5Util.encryptMD5 exactly.
     mixed = "".join(ch + SALT[i % 16] for i, ch in enumerate(input_str))

@@ -10,7 +10,7 @@ from ..db import exec_one, fetch_all, fetch_one, sql_binary, tx
 from ..passwords import hash_password, verify_user_password
 from ..rate_limit import clear_login_account_attempts, reserve_login_request, reserve_registration_request
 from ..response import vo
-from ..utils import EMAIL_PATTERN, PASSWORD_PATTERN, USERNAME_PATTERN, encrypt_md5, mask_equip_id, new_token
+from ..utils import PASSWORD_PATTERN, USERNAME_PATTERN, contact_validation_error, encrypt_md5, mask_equip_id, new_token
 from .common import token_verify_member
 
 router = APIRouter(prefix="/api/user", tags=["user"])
@@ -144,6 +144,9 @@ def contact(
         correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
         if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
+        error = contact_validation_error(phone, wechat_id, email)
+        if error:
+            return vo(-3, error)
 
         rc = exec_one(
             conn,
@@ -184,13 +187,14 @@ def register(
         return vo(-1, "Invalid Password Format")
     if not USERNAME_PATTERN.fullmatch(username):
         return vo(-2, "用户名只能包含字母和数字，且不能超过100个字符")
-    for label, value in (("姓名", name), ("学号", student_id), ("会员卡号", card_id), ("手机号", phone), ("微信号", wechat_id)):
+    for label, value in (("姓名", name), ("学号", student_id), ("会员卡号", card_id)):
         if not value.strip():
             return vo(-2, f"请填写{label}")
         if len(value) > 100:
             return vo(-2, f"{label}不能超过100个字符")
-    if email and (len(email) > 100 or not EMAIL_PATTERN.fullmatch(email)):
-        return vo(-2, "邮箱格式不正确或超过100个字符")
+    error = contact_validation_error(phone, wechat_id, email)
+    if error:
+        return vo(-2, error)
 
     with tx() as conn:
         exists = fetch_one(conn, "select * from users where username=:username", {"username": username})
