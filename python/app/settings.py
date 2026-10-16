@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     login_account_limit: int = Field(default=8, ge=1, validation_alias="LOGIN_ACCOUNT_LIMIT")
     login_ip_limit: int = Field(default=120, ge=1, validation_alias="LOGIN_IP_LIMIT")
     login_window_seconds: int = Field(default=900, ge=1, validation_alias="LOGIN_WINDOW_SECONDS")
+    register_ip_limit: int = Field(default=10, ge=1, validation_alias="REGISTER_IP_LIMIT")
+    register_window_seconds: int = Field(default=3600, ge=1, validation_alias="REGISTER_WINDOW_SECONDS")
     trusted_proxy_ips: str = Field(default="", validation_alias="TRUSTED_PROXY_IPS")
 
     @field_validator("trusted_proxy_ips")
