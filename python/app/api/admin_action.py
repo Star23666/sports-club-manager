@@ -109,12 +109,12 @@ def query_actions(
 
 @router.post("/deleteAction")
 def delete_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action:
             return vo(-1, "Action Not Exist")
 
@@ -136,12 +136,12 @@ def update_action(
     staff_user_id: int = Query(0),
     wechat_url: str = Query(""),
 ):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        action1 = fetch_one(conn, "select * from actions where ID=:id", {"id": id})
+        action1 = lock_action(conn, id)
         if not action1:
             return vo(-1, "Action Not Exist")
 
@@ -187,12 +187,12 @@ def update_action(
 
 @router.post("/releaseAction")
 def release_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action:
             return vo(-1, "No Action")
 
@@ -208,12 +208,12 @@ def release_action(token: str = Depends(bearer_token), action_id: int = Query(..
 
 @router.post("/stopRegisterAction")
 def stop_register_action(token: str = Depends(bearer_token), action_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action:
             return vo(-1, "No Action")
 
