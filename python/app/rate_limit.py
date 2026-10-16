@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import time
+from ipaddress import ip_address
 
 from sqlalchemy.engine import Connection
 
@@ -104,5 +105,20 @@ def reserve_login_request(request, username: str) -> bool:
 
 
 def recovery_client_ip(request) -> str:
-    """Use the direct peer, never an untrusted X-Forwarded-For header."""
-    return request.client.host if request.client else "unknown"
+    """Use a proxy-overwritten real IP only for an explicitly trusted peer."""
+    peer = request.client.host if request.client else "unknown"
+    try:
+        peer_address = ip_address(peer)
+    except ValueError:
+        return peer
+
+    if peer_address in settings.trusted_proxy_addresses:
+        # Our bundled Nginx config overwrites this header with $remote_addr.
+        # Duplicates or malformed values fall back to the peer's shared bucket.
+        values = request.headers.getlist("x-real-ip")
+        if len(values) == 1:
+            try:
+                return str(ip_address(values[0].strip()))
+            except ValueError:
+                pass
+    return str(peer_address)
