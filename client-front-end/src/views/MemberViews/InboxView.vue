@@ -258,8 +258,10 @@ export default {
               showFailToast('数据库异常，请稍后重试');
             }
             if(response.data.status === 3){
-              showSuccessToast('密码修改成功');
+              Cookies.remove('token');
+              showSuccessToast('密码修改成功，请重新登录');
               this.setPasswordShow = false;
+              this.$router.push('/login');
             }
           })
           .catch(error =>{

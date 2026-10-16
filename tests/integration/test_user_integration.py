@@ -1,5 +1,7 @@
 from contextlib import contextmanager
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
+from threading import Barrier
 
 import pytest
 from sqlalchemy import create_engine
@@ -368,3 +370,140 @@ def test_reset_email_throttle_and_valid_code_work_with_sqlite_dates(integration_
         "/api/user/login", json={"username": "recover-me", "password": "Aa1$newpass"}
     )
     assert login.json()["status"] == 2
+
+
+@pytest.mark.parametrize(
+    ("state", "password_path", "verify_path", "login_path", "login_status"),
+    [
+        (2, "/api/user/password", "/api/user/verify", "/api/user/login", 2),
+        (4, "/admin/api/user/password", "/admin/api/user/verify", "/admin/api/user/login", 0),
+    ],
+)
+def test_self_password_change_revokes_current_session(
+    integration_client, state, password_path, verify_path, login_path, login_status
+):
+    username = f"change-{state}"
+    old_token = f"old-token-{state}"
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            (username, hash_password("Aa1$oldpass"), state),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username=?", (username,)).scalar_one()
+        conn.exec_driver_sql("insert into user_view(ID, username, state) values (?, ?, ?)", (user_id, username, state))
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, old_token, (datetime.now() + timedelta(hours=1)).isoformat()),
+        )
+
+    headers = {"Authorization": f"Bearer {old_token}"}
+    wrong = integration_client.post(
+        password_path, headers=headers, json={"origin_pass": "wrong", "new_pass": "Aa1$newpass"}
+    )
+    assert wrong.json()["status"] == 1
+    assert integration_client.post(verify_path, headers=headers).json()["status"] == 1
+
+    changed = integration_client.post(
+        password_path, headers=headers, json={"origin_pass": "Aa1$oldpass", "new_pass": "Aa1$newpass"}
+    )
+    assert changed.json()["status"] == 3
+    assert integration_client.post(verify_path, headers=headers).json()["status"] == -1
+    assert integration_client.post(
+        login_path, json={"username": username, "password": "Aa1$oldpass"}
+    ).json()["status"] == -2
+    assert integration_client.post(
+        login_path, json={"username": username, "password": "Aa1$newpass"}
+    ).json()["status"] == login_status
+
+
+def test_admin_password_reset_revokes_only_target_session(integration_client):
+    with db_module.engine.begin() as conn:
+        for username, state, token in (("admin-resetter", 4, "admin-token"), ("reset-target", 2, "target-token")):
+            conn.exec_driver_sql(
+                "insert into users(username, password, state) values (?, ?, ?)",
+                (username, hash_password("Aa1$oldpass"), state),
+            )
+            user_id = conn.exec_driver_sql("select id from users where username=?", (username,)).scalar_one()
+            conn.exec_driver_sql("insert into user_view(ID, username, state) values (?, ?, ?)", (user_id, username, state))
+            conn.exec_driver_sql(
+                "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+                (user_id, token, (datetime.now() + timedelta(hours=1)).isoformat()),
+            )
+        target_id = conn.exec_driver_sql("select id from users where username='reset-target'").scalar_one()
+
+    response = integration_client.post(
+        f"/admin/api/member/updateUserPassword?user_id={target_id}",
+        headers={"Authorization": "Bearer admin-token"},
+        json={"password": "Aa1$newpass"},
+    )
+    assert response.json()["status"] == 1
+    assert integration_client.post(
+        "/api/user/verify", headers={"Authorization": "Bearer target-token"}
+    ).json()["status"] == -1
+    assert integration_client.post(
+        "/admin/api/user/verify", headers={"Authorization": "Bearer admin-token"}
+    ).json()["status"] == 1
+    assert integration_client.post(
+        "/api/user/login", json={"username": "reset-target", "password": "Aa1$newpass"}
+    ).json()["status"] == 2
+
+
+def test_recovery_code_is_single_use_and_revokes_old_session(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("recover-session", hash_password("Aa1$oldpass"), 2),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username='recover-session'").scalar_one()
+        conn.exec_driver_sql(
+            "insert into user_view(ID, username, state) values (?, ?, ?)", (user_id, "recover-session", 2)
+        )
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, "recover-old-token", (datetime.now() + timedelta(hours=1)).isoformat()),
+        )
+        conn.exec_driver_sql(
+            "insert into verifycode(user_id, code, out_time) values (?, ?, ?)",
+            (user_id, "one-time-code", (datetime.now() + timedelta(minutes=30)).isoformat()),
+        )
+
+    assert integration_client.post(
+        "/api/find/resetPassword", json={"code": "one-time-code", "password": "Aa1$newpass"}
+    ).json()["status"] == 0
+    assert integration_client.post(
+        "/api/find/resetPassword", json={"code": "one-time-code", "password": "Aa1$otherpass"}
+    ).json()["status"] == -2
+    assert integration_client.post(
+        "/api/user/verify", headers={"Authorization": "Bearer recover-old-token"}
+    ).json()["status"] == -1
+    assert integration_client.post(
+        "/api/user/login", json={"username": "recover-session", "password": "Aa1$newpass"}
+    ).json()["status"] == 2
+
+
+def test_concurrent_recovery_requests_only_one_can_use_code(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("recover-race", hash_password("Aa1$oldpass"), 2),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username='recover-race'").scalar_one()
+        conn.exec_driver_sql(
+            "insert into verifycode(user_id, code, out_time) values (?, ?, ?)",
+            (user_id, "race-code", (datetime.now() + timedelta(minutes=30)).isoformat()),
+        )
+
+    barrier = Barrier(2)
+
+    def reset(password):
+        from fastapi.testclient import TestClient
+
+        with TestClient(app_main.app) as client:
+            barrier.wait(timeout=10)
+            result = client.post("/api/find/resetPassword", json={"code": "race-code", "password": password})
+            assert result.status_code == 200
+            return result.json()["status"]
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(reset, ("Aa1$firstpass", "Aa1$secondpass")))
+    assert sorted(outcomes) == [-2, 0]

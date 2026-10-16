@@ -225,8 +225,10 @@ export default {
                 layer.msg('数据库异常', {icon: 2, time: 1500});
               }
               if(response.data.status === 3){
-                layer.msg('修改成功', {icon: 1, time: 1500});
+                Cookies.remove('token');
+                layer.msg('密码修改成功，请重新登录', {icon: 1, time: 1500});
                 this.changePasswordShow = false;
+                this.$router.push('/login');
               }
             })
             .catch(error =>{

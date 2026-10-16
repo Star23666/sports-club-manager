@@ -96,7 +96,7 @@ def send_reset_email_api(
 
 @router.post("/resetPassword")
 def reset_password(request: Request, code: str = Body("", embed=True), password: str = Body("", embed=True)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         peer = recovery_client_ip(request)
         if not allow_recovery_attempt(conn, scope="reset:ip", subject=peer, limit=10, window_seconds=900):
             return vo(-3, "Too many recovery attempts. Try again later.")
@@ -106,8 +106,13 @@ def reset_password(request: Request, code: str = Body("", embed=True), password:
             return vo(-2, "Password Invalid!")
         if not code.strip():
             return vo(-2, "Not Found")
-        vc = fetch_one(conn, "select * from verifycode where code=:code", {"code": code})
-        if not vc:
+        code_ref = fetch_one(conn, "select user_id from verifycode where code=:code", {"code": code})
+        if not code_ref:
+            return vo(-2, "Not Found")
+        # Lock by the table's primary key, then re-check the code with a
+        # current read. This avoids locking a full table scan on MySQL.
+        vc = fetch_one(conn, "select * from verifycode where user_id=:uid", {"uid": code_ref["user_id"]}, for_update=True)
+        if not vc or vc.get("code") != code:
             return vo(-2, "Not Found")
 
         exec_one(conn, "delete from verifycode where user_id=:uid", {"uid": vc["user_id"]})
@@ -120,4 +125,5 @@ def reset_password(request: Request, code: str = Body("", embed=True), password:
             return vo(-1, "Time Exceed")
 
         exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": hash_password(password), "uid": user["id"]})
+        exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user["id"]})
         return vo(0, "Successfully!")

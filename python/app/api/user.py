@@ -66,17 +66,18 @@ def change_password(
     if not PASSWORD_PATTERN.match(new_pass):
         return vo(-2, "Password Invalid!")
 
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user_view = token_verify_member(conn, token)
         if status <= 0 or not user_view:
             return vo(status, "Token or Account Error.")
 
-        correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
+        correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]}, for_update=True)
         if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
 
         rc = exec_one(conn, "update users set password=:pwd where ID=:uid", {"pwd": hash_password(new_pass), "uid": user_view["id"]})
         if rc > 0:
+            exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user_view["id"]})
             return vo(3, "Successful!")
         return vo(2, "Database Error!")
 

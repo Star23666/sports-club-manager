@@ -11,6 +11,7 @@ from fastapi.testclient import TestClient
 
 from app.db import DB_IS_SQLITE, exec_one, fetch_all, fetch_one, tx
 from app.main import app
+from app.passwords import hash_password
 from app.rate_limit import allow_login_attempt, clear_login_account_attempts
 from app.settings import settings
 
@@ -171,3 +172,44 @@ def test_mysql_public_transfer_has_one_winner():
         )
         assert owner["user_id"] == user_ids[tokens.index(winner)]
         assert fetch_one(conn, "select count(*) as c from transfer where ID=:id", {"id": transfer["id"]})["c"] == 0
+
+
+@pytest.mark.skipif(
+    os.getenv("TEST_MYSQL_CAPACITY") != "1" or DB_IS_SQLITE,
+    reason="requires an explicitly selected disposable MySQL database",
+)
+def test_mysql_recovery_code_race_revokes_session():
+    if not settings.db_name.startswith("club_capacity_test_"):
+        pytest.fail("refusing to run against a non-disposable MySQL database")
+
+    run_id = uuid4().hex[:8]
+    username = f"recovery-race-{run_id}"
+    code = f"recovery-code-{run_id}"
+    with tx() as conn:
+        exec_one(
+            conn, "insert into users(username, password, state) values (:name, :password, 2)",
+            {"name": username, "password": hash_password("Aa1$oldpass")},
+        )
+        user = fetch_one(conn, "select ID from users where username=:name", {"name": username})
+        exec_one(
+            conn, "insert into tokens(user_id, token, out_time) values (:uid, :token, :expiry)",
+            {"uid": user["id"], "token": f"old-token-{run_id}", "expiry": datetime.now() + timedelta(hours=1)},
+        )
+        exec_one(
+            conn, "insert into verifycode(user_id, code, out_time) values (:uid, :code, :expiry)",
+            {"uid": user["id"], "code": code, "expiry": datetime.now() + timedelta(minutes=30)},
+        )
+
+    barrier = Barrier(2)
+
+    def reset(password):
+        with TestClient(app) as client:
+            barrier.wait(timeout=10)
+            response = client.post("/api/find/resetPassword", json={"code": code, "password": password})
+            assert response.status_code == 200
+            return response.json()["status"]
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        assert sorted(pool.map(reset, ("Aa1$firstpass", "Aa1$secondpass"))) == [-2, 0]
+    with tx() as conn:
+        assert fetch_one(conn, "select count(*) as c from tokens where user_id=:uid", {"uid": user["id"]})["c"] == 0

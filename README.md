@@ -293,7 +293,7 @@ Frontend builds / 前端构建：分别在 `client-front-end` 和 `admin-front-e
 | Concern / 关注点 | Implementation / 实现 | Production Note / 生产环境建议 |
 |---|---|---|
 | Password hashing / 密码哈希 | 新密码使用 Argon2id；旧 MD5 在成功登录后升级 | 先轮换旧版公开管理员密码 |
-| Auth / 认证 | UUID v4 token, 3h expiry；`Authorization: Bearer` 请求头；设备免密登录暂时停用 | 仍需完整权限审计，不可公开部署真实用户数据 |
+| Auth / 认证 | UUID v4 token, 3h expiry；`Authorization: Bearer` 请求头；设备免密登录暂时停用；成功修改或重置密码会撤销该账号已有令牌 | 修改密码后需重新登录；仍需完整权限审计，不可公开部署真实用户数据 |
 | Account recovery / 账户找回 | 用户名查询、重置邮件和重置码提交按来源 IP 与账号/验证码分别限流，计数保存在数据库 | MySQL 旧库先建 `recovery_rate_limit` 表；反向代理后按直连地址限流，需评估共享 IP 的影响 |
 | Login / 登录 | 会员与管理员共用登录计数器；账号每 15 分钟默认 8 次、来源每 15 分钟默认 120 次；成功登录清除账号计数 | MySQL 旧库先执行 `upgrade_login_rate_limit.sql`；来源默认是直连 IP，只有精确配置可信代理后才接受其覆盖写入的 `X-Real-IP` |
 | Capacity / 名额 | 同一活动的报名、候补与取消在数据库事务中串行处理；满额检查用当前读 | SQLite 并发测试和一次性 MySQL 8.0 并发测试通过；仍需真实流量压测 |
