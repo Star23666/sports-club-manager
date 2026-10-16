@@ -9,7 +9,8 @@ SALT = "$0q#Ag%#0xN9+KuB"  # must match Java MD5Util
 
 
 PASSWORD_PATTERN = re.compile(r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}$")
-EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,7}$")
+USERNAME_PATTERN = re.compile(r"[A-Za-z0-9]{1,100}")
+EMAIL_PATTERN = re.compile(r"^[a-zA-Z0-9_+&*-]+(?:\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,63}$")
 
 
 def encrypt_md5(input_str: str) -> str:

@@ -116,7 +116,7 @@ def test_register_duplicate_then_reject(integration_client):
         "phone": "P",
         "wechat_id": "W",
         "student_id": "S",
-        "email": "u100@example.com",
+        "email": "u100@example.technology",
     }
 
     r1 = integration_client.post("/api/user/register", json=params)
@@ -143,17 +143,48 @@ def test_registration_ip_limit_counts_failed_attempts_and_ignores_spoofed_forwar
     def registration(username, password="Aa1$aaaa", headers=None):
         return integration_client.post(
             "/api/user/register", headers=headers,
-            json={"username": username, "password": password, "name": "Member", "student_id": "S1"},
+            json={
+                "username": username, "password": password, "name": "Member", "student_id": "S1",
+                "card_id": "C1", "phone": "+86 13800000000", "wechat_id": "member123",
+            },
         ).json()
 
     assert registration("invalid", password="weak")["status"] == -1
-    assert registration("member-a")["status"] == 0
-    assert registration("member-b", headers={"X-Forwarded-For": "203.0.113.9"})["status"] == -3
+    assert registration("membera")["status"] == 0
+    assert registration("memberb", headers={"X-Forwarded-For": "203.0.113.9"})["status"] == -3
     with db_module.engine.begin() as conn:
-        assert conn.exec_driver_sql("select count(*) from users where username='member-b'").scalar_one() == 0
+        assert conn.exec_driver_sql("select count(*) from users where username='memberb'").scalar_one() == 0
 
     now[0] += 3601
-    assert registration("member-b")["status"] == 0
+    assert registration("memberb")["status"] == 0
+
+
+@pytest.mark.parametrize(
+    ("override", "expected_status"),
+    [
+        ({"username": "含中文"}, -2),
+        ({"username": ""}, -2),
+        ({"username": "member-a"}, -2),
+        ({"name": "  "}, -2),
+        ({"student_id": "S" * 101}, -2),
+        ({"card_id": ""}, -2),
+        ({"phone": ""}, -2),
+        ({"wechat_id": ""}, -2),
+        ({"email": "not-an-email"}, -2),
+        ({"password": "Aa1$" + "a" * 125}, -1),
+    ],
+)
+def test_registration_rejects_invalid_server_side_fields(integration_client, override, expected_status):
+    values = {
+        "username": "member01", "password": "Aa1$aaaa", "name": "Member", "student_id": "S1",
+        "card_id": "C1", "phone": "+86 13800000000", "wechat_id": "member123", "email": "",
+    }
+    values.update(override)
+    response = integration_client.post("/api/user/register", json=values)
+    assert response.status_code == 200
+    assert response.json()["status"] == expected_status
+    with db_module.engine.begin() as conn:
+        assert conn.exec_driver_sql("select count(*) from users").scalar_one() == 0
 
 
 def test_member_and_admin_share_login_attempt_limit(integration_client, monkeypatch):

@@ -186,6 +186,11 @@ export default {
               this.disabled = false;
               return;
             }
+            if(data.data.status === -2){
+              showFailToast(data.data.data || "注册资料格式不正确");
+              this.disabled = false;
+              return;
+            }
             if(data.data.status === -1){
               showFailToast(data.data.data === 'Invalid Password Format' ? '密码格式不符合要求' : '用户名已存在，请更换后重试');
               this.password = this.password_confirm = '';
