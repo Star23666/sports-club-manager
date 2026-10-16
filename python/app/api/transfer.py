@@ -96,14 +96,20 @@ def accept_transfer(token: str = Depends(bearer_token), transfer_id: int = Query
             return vo(-1, "No Record")
 
         action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
-        if action:
-            in_action = fetch_one(
-                conn,
-                "select count(*) as c from records where user_id=:uid and action_id=:aid",
-                {"uid": user["id"], "aid": action["id"]},
-            )
-            if in_action and int(in_action["c"]) > 0 and int(record.get("user_id") or 0) != int(user["id"]):
-                return vo(1, "Repeated!")
+        if (
+            not action
+            or int(action.get("state") or 0) != 3
+            or int(record.get("state") or 0) != 0
+            or int(record.get("user_id") or 0) != int(transfer.get("send_user_id") or 0)
+        ):
+            return vo(0, "Transfer no longer available")
+        in_action = fetch_one(
+            conn,
+            "select count(*) as c from records where user_id=:uid and action_id=:aid",
+            {"uid": user["id"], "aid": action["id"]},
+        )
+        if in_action and int(in_action["c"]) > 0 and int(record.get("user_id") or 0) != int(user["id"]):
+            return vo(1, "Repeated!")
 
         exec_one(
             conn,

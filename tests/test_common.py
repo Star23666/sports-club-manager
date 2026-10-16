@@ -39,6 +39,24 @@ def test_token_verify_member_expired_token_deletes(monkeypatch):
     assert calls["exec"] == 1
 
 
+@pytest.mark.parametrize("verifier", [common.token_verify_member, common.token_verify_admin])
+def test_token_without_expiration_is_rejected(monkeypatch, verifier):
+    calls = []
+
+    def fake_fetch_one(_conn, sql, _params=None):
+        if "count(*) as c from tokens" in sql:
+            return {"c": 1}
+        if "select * from tokens" in sql:
+            return {"user_id": 1, "out_time": None}
+        pytest.fail(f"unexpected sql: {sql}")
+
+    monkeypatch.setattr(common, "fetch_one", fake_fetch_one)
+    monkeypatch.setattr(common, "exec_one", lambda _conn, sql, _params=None: calls.append(sql))
+
+    assert verifier(DummyConn(), "legacy-token") == (0, None)
+    assert len(calls) == 1
+
+
 def test_token_verify_member_success(monkeypatch):
     user_view = {"id": 7, "state": 2}
 

@@ -132,7 +132,7 @@ def test_verify_with_valid_token(integration_client):
         )
         conn.exec_driver_sql(
             "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
-            (user_id, "tok-ok", None),
+            (user_id, "tok-ok", (datetime.now() + timedelta(hours=1)).isoformat()),
         )
 
     r = integration_client.post("/api/user/verify", headers={"Authorization": "Bearer tok-ok"})
@@ -222,7 +222,7 @@ def test_role_tokens_cannot_cross_member_admin_boundary(integration_client, stat
         )
         conn.exec_driver_sql(
             "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
-            (user_id, f"role-token-{state}", None),
+            (user_id, f"role-token-{state}", (datetime.now() + timedelta(hours=1)).isoformat()),
         )
 
     response = integration_client.post(path, headers={"Authorization": f"Bearer role-token-{state}"})

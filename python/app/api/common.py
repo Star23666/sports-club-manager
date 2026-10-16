@@ -25,7 +25,7 @@ def token_verify_member(conn: Connection, token: str) -> tuple[int, dict | None]
     now = datetime.now()
     raw_expiry = token_row.get("out_time")
     expiry = parse_maybe_datetime(raw_expiry)
-    if raw_expiry and (expiry is None or expiry < now):
+    if expiry is None or expiry < now:
         exec_one(conn, "delete from tokens where token=:token", {"token": token})
         return 0, None
 
@@ -52,7 +52,7 @@ def token_verify_admin(conn: Connection, token: str) -> tuple[int, dict | None]:
     now = datetime.now()
     raw_expiry = token_row.get("out_time")
     expiry = parse_maybe_datetime(raw_expiry)
-    if raw_expiry and (expiry is None or expiry < now):
+    if expiry is None or expiry < now:
         exec_one(conn, "delete from tokens where token=:token", {"token": token})
         return 0, None
 
