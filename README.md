@@ -298,6 +298,7 @@ Frontend builds / 前端构建：分别在 `client-front-end` 和 `admin-front-e
 | Login / 登录 | 会员与管理员共用登录计数器；账号每 15 分钟默认 8 次、来源每 15 分钟默认 120 次；成功登录清除账号计数 | MySQL 旧库先执行 `upgrade_login_rate_limit.sql`；来源默认是直连 IP，只有精确配置可信代理后才接受其覆盖写入的 `X-Real-IP` |
 | Capacity / 名额 | 同一活动的报名、候补与取消在数据库事务中串行处理；满额检查用当前读 | SQLite 并发测试和一次性 MySQL 8.0 并发测试通过；仍需真实流量压测 |
 | Check-in / 签到 | 开始签到、现场签到和活动结束共用活动事务锁，活动结束后不会再记入现场签到 | SQLite 和一次性 MySQL 8.0 并发回归测试通过；仍需真实流量压测 |
+| Action lifecycle / 活动状态 | 管理员编辑、发布、截止报名、删除活动与报名和开始签到共用活动事务锁 | SQLite 和一次性 MySQL 8.0 并发回归测试通过；仍需真实流量压测 |
 | Transfer / 名额转让 | 公开转让只允许一人成功领取；指定转让仅限指定会员接受或拒绝，同一活动内使用事务锁与当前读 | SQLite 和一次性 MySQL 8.0 并发测试通过；尚未做真实流量压测 |
 | Sensitive data transport / 敏感数据传输 | 密码、签到码及注册/联系资料在 JSON 请求体中 | 部署时必须使用 HTTPS；其余接口仍需审计 |
 | CORS | 显式配置 `CORS_ORIGINS` | 部署前设置实际前端域名 |
