@@ -6,7 +6,7 @@ from fastapi import APIRouter, Body, Depends, Query
 
 from .auth_transport import bearer_token
 
-from ..db import exec_one, fetch_all, fetch_one, tx
+from ..db import exec_one, fetch_all, fetch_one, lock_action, tx
 from ..response import vo
 from .common import token_verify_member
 
@@ -36,24 +36,27 @@ def query_transfer(token: str = Depends(bearer_token)):
 
 @router.post("/transferRecord")
 def transfer_record(token: str = Depends(bearer_token), record_id: int = Query(...), receive_user: str = Body("", embed=True)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Incorrect")
 
-        record = fetch_one(conn, "select * from records where ID=:id", {"id": record_id})
-        if not record:
+        record_ref = fetch_one(conn, "select action_id from records where ID=:id", {"id": record_id})
+        if not record_ref:
             return vo(-1, "No Record")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
+        action = lock_action(conn, record_ref["action_id"])
+        record = fetch_one(conn, "select * from records where ID=:id", {"id": record_id}, for_update=True)
+        if not record:
+            return vo(-1, "No Record")
         if not action or int(action.get("state") or 0) != 3:
             return vo(0, "Can not Translate!")
 
         if int(record.get("user_id") or 0) != int(user["id"]):
             return vo(1, "User Not Match")
 
-        cnt = fetch_one(conn, "select count(*) as c from transfer where record_id=:rid", {"rid": record_id})
-        if cnt and int(cnt["c"]) > 0:
+        existing = fetch_all(conn, "select ID from transfer where record_id=:rid", {"rid": record_id}, for_update=True)
+        if existing:
             return vo(2, "Transfer Repeted!")
 
         if not receive_user:
@@ -76,12 +79,20 @@ def transfer_record(token: str = Depends(bearer_token), record_id: int = Query(.
 
 @router.post("/acceptTransfer")
 def accept_transfer(token: str = Depends(bearer_token), transfer_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Incorrect")
 
-        transfer = fetch_one(conn, "select * from transfer where ID=:id", {"id": transfer_id})
+        transfer_ref = fetch_one(conn, "select record_id from transfer where ID=:id", {"id": transfer_id})
+        if not transfer_ref:
+            return vo(-1, "No Record")
+
+        record_ref = fetch_one(conn, "select action_id from records where ID=:id", {"id": transfer_ref["record_id"]})
+        if not record_ref:
+            return vo(-1, "No Record")
+        action = lock_action(conn, record_ref["action_id"])
+        transfer = fetch_one(conn, "select * from transfer where ID=:id", {"id": transfer_id}, for_update=True)
         if not transfer:
             return vo(-1, "No Record")
 
@@ -91,24 +102,25 @@ def accept_transfer(token: str = Depends(bearer_token), transfer_id: int = Query
         if int(transfer.get("receive_user_id") or 0) != int(user["id"]) and int(transfer.get("receive_user_id") or 0) != int(transfer.get("send_user_id") or 0):
             return vo(0, "Not Match")
 
-        record = fetch_one(conn, "select * from records where ID=:id", {"id": transfer["record_id"]})
+        record = fetch_one(conn, "select * from records where ID=:id", {"id": transfer["record_id"]}, for_update=True)
         if not record:
             return vo(-1, "No Record")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
         if (
             not action
+            or int(record["action_id"]) != int(action["id"])
             or int(action.get("state") or 0) != 3
             or int(record.get("state") or 0) != 0
             or int(record.get("user_id") or 0) != int(transfer.get("send_user_id") or 0)
         ):
             return vo(0, "Transfer no longer available")
-        in_action = fetch_one(
+        in_action = fetch_all(
             conn,
-            "select count(*) as c from records where user_id=:uid and action_id=:aid",
+            "select ID from records where user_id=:uid and action_id=:aid",
             {"uid": user["id"], "aid": action["id"]},
+            for_update=True,
         )
-        if in_action and int(in_action["c"]) > 0 and int(record.get("user_id") or 0) != int(user["id"]):
+        if in_action and int(record.get("user_id") or 0) != int(user["id"]):
             return vo(1, "Repeated!")
 
         exec_one(
@@ -122,12 +134,20 @@ def accept_transfer(token: str = Depends(bearer_token), transfer_id: int = Query
 
 @router.post("/refuseTransfer")
 def refuse_transfer(token: str = Depends(bearer_token), transfer_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Incorrect")
 
-        transfer = fetch_one(conn, "select * from transfer where ID=:id", {"id": transfer_id})
+        transfer_ref = fetch_one(conn, "select record_id from transfer where ID=:id", {"id": transfer_id})
+        if not transfer_ref:
+            return vo(-1, "No Record")
+
+        record_ref = fetch_one(conn, "select action_id from records where ID=:id", {"id": transfer_ref["record_id"]})
+        if not record_ref:
+            return vo(-1, "No Record")
+        lock_action(conn, record_ref["action_id"])
+        transfer = fetch_one(conn, "select * from transfer where ID=:id", {"id": transfer_id}, for_update=True)
         if not transfer:
             return vo(-1, "No Record")
 

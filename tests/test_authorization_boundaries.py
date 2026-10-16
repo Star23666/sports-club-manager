@@ -86,6 +86,12 @@ def test_member_cannot_read_or_mutate_another_members_resources(
     if path in {"/api/action/cancelAction", "/api/waiting/waitDelete"}:
         monkeypatch.setattr(module, "lock_action", lambda *_args: {"id": 20, "state": 2})
         row_iter = iter([rows[0], rows[0]])
+    elif path == "/api/transfer/transferRecord":
+        monkeypatch.setattr(module, "lock_action", lambda *_args: {"id": 20, "state": 3})
+        row_iter = iter([{"action_id": 20}, rows[0]])
+    elif path in {"/api/transfer/acceptTransfer", "/api/transfer/refuseTransfer"}:
+        monkeypatch.setattr(module, "lock_action", lambda *_args: {"id": 20, "state": 3})
+        row_iter = iter([{"record_id": 30}, {"action_id": 20}, rows[0]])
     else:
         row_iter = iter(rows)
     monkeypatch.setattr(module, "fetch_one", lambda *_args, **_kwargs: next(row_iter))
