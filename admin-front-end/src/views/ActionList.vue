@@ -40,7 +40,7 @@
           <label for="file-upload" :class="actionInf.state > 3 ? 'file-upload-label-disabled' : 'file-upload-label'"><lay-icon type="layui-icon-link"/> 上传二维码</label>
         </div>
         &nbsp;&nbsp;<p style="font-size: 9pt; color: gray; margin-left: 130pt; margin-top: -18pt">自动识别二维码内容</p>
-        <div v-if="decodedResult" style="font-size: 10pt; margin-top: 8pt">QR Code is Uploaded:
+        <div v-if="decodedResult" style="font-size: 10pt; margin-top: 8pt">二维码已上传：
           <lay-button v-if="!qrcodeShow" size="xs" type="warm" @click="this.qrcodeShow = 1" prefix-icon="layui-icon-show">预览</lay-button>
           <lay-button v-else size="xs" type="danger" @click="this.qrcodeShow = 0" prefix-icon="layui-icon-reduce-circle" >隐藏</lay-button>
           <br/>
@@ -69,7 +69,7 @@
         活动已开始。如需结束，请<a style="cursor: pointer; text-decoration: underline" @click="onStopAction">点击此处</a>。&nbsp;&nbsp;&nbsp;
       </div>
       <div style="text-align: right; margin-top: 5px;" v-if="actionInf.state === 5">
-        This action has terminated, information is for reference only.&nbsp;&nbsp;&nbsp;
+        活动已结束，信息仅供查看。&nbsp;&nbsp;&nbsp;
       </div>
       <br/>
     </template>
