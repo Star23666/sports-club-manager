@@ -16,7 +16,7 @@
       </div>
       <van-row justify="center">
       <div v-for="item in waitingList">
-        <van-cell-group inset style="min-width: 360px">
+        <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
           <van-cell title="Action">{{item.action_title}}</van-cell>
           <van-cell title="Waiting for">{{item.action_user}}</van-cell>
           <van-cell title="Queuing Rank">{{item.wait_rank}}</van-cell>
@@ -43,7 +43,7 @@
         </div>
       <van-row justify="center">
       <div v-for="item in presentList">
-        <van-cell-group inset style="min-width: 360px">
+        <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
           <van-cell title="Action Name">{{item.action_title}}</van-cell>
           <van-cell title="Initiator">{{item.send_user}}</van-cell>
           <van-cell title="Recipient">{{item.receive_user == '' ? 'Anyone' : item.receive_user}}</van-cell>

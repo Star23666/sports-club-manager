@@ -22,7 +22,7 @@
     </div>
     <van-row justify="center">
       <div v-for="item in actionList">
-        <van-cell-group inset style="min-width: 360px">
+        <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
           <van-cell :title="item.title"/>
           <van-cell title="Location">{{item.place}}</van-cell>
           <van-cell title="Date">{{item.date}}</van-cell>

@@ -58,7 +58,7 @@
     </div>
     <van-row justify="center">
       <div v-for="item in recordList">
-        <van-cell-group inset style="min-width: 360px">
+        <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
           <van-row justify="center" style="margin: 10px 0px 0px 0px;">
             <van-image
                 width="90"
