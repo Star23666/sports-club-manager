@@ -93,7 +93,7 @@ Suggested shots / 建议截图：
 | 📅 Browse & register for events | 📅 浏览并报名活动 |
 | ⏳ Auto waitlist when full | ⏳ 满员自动进入候补 |
 | ↔️ Transfer spot to another member | ↔️ 名额转让给其他成员 |
-| 📱 QR-code attendance scanning | 📱 扫码签到 |
+| 📱 QR-code or manual-code check-in | 📱 扫码或手动输入签到码 |
 | 🔍 Account recovery & password reset | 🔍 找回账号与重置密码 |
 
 ### Admin Dashboard / 管理端 (Vue 3 + LayUI)
@@ -135,7 +135,7 @@ bash start.sh
 → Open / 打开 <http://localhost:8081/docs> — backend live with SQLite.  
 → First administrator / 首位管理员：运行 `cd python && python -m app.bootstrap_admin`，按提示输入新密码（不会显示或写入命令历史）。旧版数据库若仍有公开的 `admin/admin`，此命令会要求设置新密码并轮换该账号。
 
-> 安全提示：旧版 MySQL 数据库请先执行 `ALTER TABLE users MODIFY password VARCHAR(255);` 和 `database/upgrade_recovery_rate_limit.sql`，再升级服务。新建数据库已包含限流表；SQLite 会自动建表。现有用户的 MD5 密码仅在正确登录时迁移为 Argon2；公开的旧版管理员密码不能登录，必须通过上述本机命令轮换。密码、签到码和注册、联系等个人资料经 JSON 请求体传递，会话令牌通过 `Authorization: Bearer` 请求头传递。设备免密登录与新增设备入口已停用，旧设备可撤销。账户找回入口现有数据库固定时间窗限流；完整权限审计、MySQL 集成验证及浏览器端到端测试仍未完成，不要公开部署真实用户数据。
+> 安全提示：旧版 MySQL 数据库请先执行 `ALTER TABLE users MODIFY password VARCHAR(255);` 和 `database/upgrade_recovery_rate_limit.sql`，再升级服务。新建数据库已包含限流表；SQLite 会自动建表。现有用户的 MD5 密码仅在正确登录时迁移为 Argon2；公开的旧版管理员密码不能登录，必须通过上述本机命令轮换。密码、签到码和注册、联系等个人资料经 JSON 请求体传递，会话令牌通过 `Authorization: Bearer` 请求头传递。设备免密登录与新增设备入口已停用，旧设备可撤销。账户找回入口现有数据库固定时间窗限流。隔离 MySQL 8.0 库中的迁移和限流已验收，但完整权限审计、MySQL 全流程及摄像头扫码验收仍未完成，不要公开部署真实用户数据。
 
 **Requirements / 环境要求:** Python 3.10+. That's it. No Docker, MySQL, or Node.js needed.
 

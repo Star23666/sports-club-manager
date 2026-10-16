@@ -13,7 +13,23 @@
       placeholder
   />
 
-  <van-notice-bar left-icon="volume-o" color="#1989fa" background="#ecf9ff" v-if="!show_sign && !isLoading"
+  <van-cell-group v-if="!sign_code" inset class="scan-entry">
+    <van-cell title="Check a member in" label="Scan their QR code or enter the code shown below it." />
+    <van-field
+        v-model.trim="manualCode"
+        label="Sign-in code"
+        placeholder="Enter the member's sign-in code"
+        maxlength="100"
+        clearable
+        @keyup.enter="submitManualCode"
+    />
+    <div class="scan-entry-actions">
+      <van-button icon="scan" plain type="primary" @click="startScan">Scan QR code</van-button>
+      <van-button type="primary" @click="submitManualCode">Look up code</van-button>
+    </div>
+  </van-cell-group>
+
+  <van-notice-bar left-icon="volume-o" color="#1989fa" background="#ecf9ff" v-if="sign_code && !show_sign && !isLoading"
                   style="position: fixed; z-index: 1000; width: 100%">
     <van-swipe
         vertical
@@ -28,13 +44,13 @@
     </van-swipe>
   </van-notice-bar>
 
-  <br v-if="!show_sign && !isLoading"/>
-  <br v-if="!show_sign && !isLoading"/>
-  <div v-if="isLoading">
+  <br v-if="sign_code && !show_sign && !isLoading"/>
+  <br v-if="sign_code && !show_sign && !isLoading"/>
+  <div v-if="sign_code && isLoading">
     <van-empty image="search" description="Loading..." />
   </div>
   <br/>
-  <div v-if="!isLoading">
+  <div v-if="sign_code && !isLoading">
     <van-cell-group inset>
       <van-row justify="center" style="margin: 0px 0px 0px 0px;">
         <h4>{{actionInf.title}}&nbsp;</h4>
@@ -83,9 +99,10 @@ import {showFailToast, showSuccessToast, showToast, showDialog} from "vant";
 export default {
   data(){
     return {
-      isLoading: true,
+      isLoading: false,
       showQrCodeReader: false,
       sign_code: '',
+      manualCode: '',
       notice_messgae: '',
       memInf: {
         name: 'loading...',
@@ -114,20 +131,37 @@ export default {
   },
   created() {
     this.$staffVerify();
-    this.showQrCodeReader = true;
   },
   methods:{
+    startScan(){
+      this.showQrCodeReader = true;
+    },
+    submitManualCode(){
+      if (!this.manualCode) {
+        showFailToast("Enter a sign-in code first.");
+        return;
+      }
+      this.onDecodeHandler(this.manualCode);
+    },
     qrReaderClose(){
       this.showQrCodeReader = false;
-      this.$router.push({path:'/staff'});
+    },
+    resetLookup(){
+      this.sign_code = '';
+      this.isLoading = false;
     },
     onDecodeHandler(data){
-      this.sign_code = data;
+      this.sign_code = String(data || '').trim();
       this.showQrCodeReader = false;
+      if (!this.sign_code) {
+        showFailToast("Enter a sign-in code first.");
+        return;
+      }
+      this.isLoading = true;
       this.$http.post(`/staff/querySign?token=${Cookies.get('token')}`, { sign_code: this.sign_code })
           .then(response => {
             if(response.status !== 200){
-              this.$router.push({path:'/staff'});
+              this.resetLookup();
               showFailToast("System Error");
               return;
             }
@@ -136,12 +170,12 @@ export default {
               return;
             }
             if(response.data.status === 0){
-              this.$router.push({path:'/staff'});
+              this.resetLookup();
               showFailToast("The current QR code information is invalid");
               return;
             }
             if(response.data.status === 2){
-              this.$router.push({path:'/staff'});
+              this.resetLookup();
               showFailToast("You are not responsible for this action");
               return;
             }
@@ -186,10 +220,9 @@ export default {
           })
           .catch(error =>{
             console.log(error);
-            this.$router.push({path:'/staff'});
+            this.resetLookup();
             showFailToast("Internet Error");
           });
-      this.isLoading = false;
     },
     onClickLeft(){
       this.$router.push({path:'/staff'});
@@ -244,6 +277,18 @@ export default {
 .notice-swipe {
   height: 40px;
   line-height: 40px;
+}
+.scan-entry {
+  margin-top: 20px;
+}
+.scan-entry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px 16px;
+}
+.scan-entry-actions .van-button {
+  flex: 1 1 130px;
 }
 </style>
 

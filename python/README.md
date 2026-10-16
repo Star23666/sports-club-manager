@@ -47,7 +47,9 @@ See `.env.example` for all options. Key settings:
 - Device-only login and new device enrollment are disabled; existing devices can still be revoked. Sign-in codes and registration/contact/profile updates use JSON bodies.
 - Account-recovery routes have database-backed fixed-window limits by direct peer IP and account/code. Reverse proxies can make users share one IP bucket; do not trust `X-Forwarded-For` without a trusted-proxy configuration.
 - For an existing MySQL database, run `ALTER TABLE users MODIFY password VARCHAR(255);` and `database/upgrade_recovery_rate_limit.sql` before deploying this version. SQLite initializes the new table automatically.
-- Do not expose this API with real users yet: a complete authorization audit, MySQL integration verification, and browser end-to-end tests are still pending.
+- The legacy password-column change and rate-limit table migration were smoke-tested against a disposable MySQL 8.0 database; reapplying the table migration was safe, and a synthetic legacy user was preserved. The opt-in test is `tests/integration/test_mysql_recovery.py` and refuses databases not named `club_upgrade_test*`.
+- Staff can now enter the member's sign-in code manually if camera scanning is unavailable. The browser-tested path covers login, roster, opening an activity, manual-code check-in, and duplicate-check-in feedback.
+- Do not expose this API with real users yet: a complete authorization audit, the full MySQL workflow, and camera-scanning acceptance are still pending.
 
 ## Docker
 
