@@ -176,9 +176,15 @@ export default {
         student_id: this.student_id, email: this.email
       })
           .then(data => {
-            console.log(data);
             if(data.status !== 200){
               showFailToast("系统异常，请稍后重试");
+              this.disabled = false;
+              return;
+            }
+            if(data.data.status === -3){
+              showFailToast("注册尝试过于频繁，请稍后再试");
+              this.disabled = false;
+              return;
             }
             if(data.data.status === -1){
               showFailToast(data.data.data === 'Invalid Password Format' ? '密码格式不符合要求' : '用户名已存在，请更换后重试');

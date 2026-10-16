@@ -8,7 +8,7 @@ from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, sql_binary, tx
 from ..passwords import hash_password, verify_user_password
-from ..rate_limit import clear_login_account_attempts, reserve_login_request
+from ..rate_limit import clear_login_account_attempts, reserve_login_request, reserve_registration_request
 from ..response import vo
 from ..utils import PASSWORD_PATTERN, encrypt_md5, mask_equip_id, new_token
 from .common import token_verify_member
@@ -168,6 +168,7 @@ def logout(token: str = Depends(bearer_token)):
 
 @router.post("/register")
 def register(
+    request: Request,
     username: str = Body("", embed=True),
     password: str = Body("", embed=True),
     name: str = Body("", embed=True),
@@ -177,6 +178,8 @@ def register(
     student_id: str = Body("", embed=True),
     email: str = Body("", embed=True),
 ):
+    if not reserve_registration_request(request):
+        return vo(-3, "Too many registration attempts. Try again later.")
     if not PASSWORD_PATTERN.match(password):
         return vo(-1, "Invalid Password Format")
 

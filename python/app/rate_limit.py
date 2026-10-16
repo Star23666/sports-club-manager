@@ -1,4 +1,4 @@
-"""Database-backed, fixed-window limits for recovery and login requests.
+"""Database-backed, fixed-window limits for recovery, login, and registration.
 
 The database upsert is atomic, so counters are shared across API workers.
 Only a SHA-256 digest of the bucket subject is stored, never the raw IP or ID.
@@ -102,6 +102,15 @@ def reserve_login_request(request, username: str) -> bool:
             limit=settings.login_account_limit, window_seconds=settings.login_window_seconds,
         )
     return ip_allowed and account_allowed
+
+
+def reserve_registration_request(request) -> bool:
+    """Limit direct registration attempts before password hashing and user creation."""
+    with tx() as conn:
+        return allow_recovery_attempt(
+            conn, scope="register:ip", subject=recovery_client_ip(request),
+            limit=settings.register_ip_limit, window_seconds=settings.register_window_seconds,
+        )
 
 
 def recovery_client_ip(request) -> str:

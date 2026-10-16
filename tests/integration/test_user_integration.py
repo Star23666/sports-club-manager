@@ -131,6 +131,31 @@ def test_register_duplicate_then_reject(integration_client):
     assert r2.json()["status"] == -1
 
 
+def test_registration_ip_limit_counts_failed_attempts_and_ignores_spoofed_forwarding(
+    integration_client, monkeypatch,
+):
+    monkeypatch.setattr(settings, "register_ip_limit", 2)
+    monkeypatch.setattr(settings, "register_window_seconds", 3600)
+    monkeypatch.setattr(settings, "trusted_proxy_ips", "")
+    now = [3600]
+    monkeypatch.setattr(rate_limit_module.time, "time", lambda: now[0])
+
+    def registration(username, password="Aa1$aaaa", headers=None):
+        return integration_client.post(
+            "/api/user/register", headers=headers,
+            json={"username": username, "password": password, "name": "Member", "student_id": "S1"},
+        ).json()
+
+    assert registration("invalid", password="weak")["status"] == -1
+    assert registration("member-a")["status"] == 0
+    assert registration("member-b", headers={"X-Forwarded-For": "203.0.113.9"})["status"] == -3
+    with db_module.engine.begin() as conn:
+        assert conn.exec_driver_sql("select count(*) from users where username='member-b'").scalar_one() == 0
+
+    now[0] += 3601
+    assert registration("member-b")["status"] == 0
+
+
 def test_member_and_admin_share_login_attempt_limit(integration_client, monkeypatch):
     monkeypatch.setattr(settings, "login_account_limit", 2)
     monkeypatch.setattr(settings, "login_ip_limit", 20)
