@@ -11,6 +11,7 @@ def main() -> None:
         host="0.0.0.0",
         port=int(settings.port),
         reload=True,
+        proxy_headers=False,
     )
 
 

@@ -14,4 +14,4 @@ EXPOSE 8081
 
 ENV PORT=8081
 
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8081"]
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8081", "--no-proxy-headers"]
