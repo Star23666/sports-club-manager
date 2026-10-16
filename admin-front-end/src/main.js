@@ -21,9 +21,9 @@ app.config.globalProperties.$http = router.Axios;
 app.config.globalProperties.$clear = function (){
     if(Cookies.get('token') !== undefined){
         Cookies.remove('token');
-        layer.msg("The status changed, please login again");
+        layer.msg("账号状态已变化，请重新登录");
     }else{
-        layer.msg("Current account has been logged out, please login again");
+        layer.msg("当前账号已退出，请重新登录");
     }
     this.$router.push('/login');
 }

@@ -1,11 +1,11 @@
 <template>
   <van-toast v-model:show="loading" type="loading" overlay="true" duration="0"
-             forbid_click="true" message="Loading..."></van-toast>
-  <van-action-sheet v-model:show="setPasswordShow" :z-index="100" title="Password Setting">
+             forbid_click="true" message="加载中..."></van-toast>
+  <van-action-sheet v-model:show="setPasswordShow" :z-index="100" title="修改密码">
     <Vcode :show="isChangePassVerifyShow"
-           slider-text="Drag Slider to Complete Puzzle"
-           fail-text="Verification Failed, Please Try Again"
-           success-text="Verification Passed"
+           slider-text="拖动滑块完成验证"
+           fail-text="验证失败，请重试"
+           success-text="验证通过"
            :range="5"
            @success="onChangePassClick"
            @close="close"
@@ -16,7 +16,7 @@
           v-model="changeInf.originPass"
           type="password"
           name="原密碼"
-          label="Original Password"
+          label="原密码"
           placeholder=""
       />
       <van-field
@@ -24,7 +24,7 @@
           v-model="changeInf.newPass"
           type="password"
           name="新密碼"
-          label="New Password"
+          label="新密码"
           placeholder=""
       />
       <van-field
@@ -32,107 +32,107 @@
           v-model="changeInf.confirmPass"
           type="password"
           name="密碼確認"
-          label="Password  Comfirm"
+          label="确认新密码"
           placeholder=""
       />
       <br/>
       <van-row justify="center">
         <van-button round block type="primary" @click="changePassPre" icon="guide-o" style="width: 200px">
-          Change Password
+          修改密码
         </van-button>
       </van-row>
       <br/>
     </van-cell-group>
   </van-action-sheet>
-  <van-action-sheet v-model:show="setContactShow" :z-index="100" title="Contact Update">
+  <van-action-sheet v-model:show="setContactShow" :z-index="100" title="修改联系方式">
     <Vcode :show="isChangeContactVerifyShow"
-           slider-text="Drag Slider to Complete Puzzle"
-           fail-text="Verification Failed, Please Try Again"
-           success-text="Verification Passed"
+           slider-text="拖动滑块完成验证"
+           fail-text="验证失败，请重试"
+           success-text="验证通过"
            :range="5"
            @success="onChangeContactClick"
            @close="close"
     />
-    <p style="font-size: 8pt; color: gray; margin-left: 10pt"> Note: To update member personal information, you must contact customer service with a copy of your ID card to register!</p>
+    <p style="font-size: 8pt; color: gray; margin-left: 10pt">如需修改会员身份资料，请联系管理员核验身份。</p>
     <van-cell-group>
       <van-field
           v-model="changeInf.originPass"
           type="password"
           name="密碼"
-          label="Password"
-          placeholder="Need to Verify Password"
+          label="密码"
+          placeholder="输入密码以验证身份"
       />
       <van-field
           v-model="changeInf.phone"
           type="tel"
           name="手機號碼"
-          label="Phone"
-          placeholder="Setting Your Phone Number"
+          label="手机号"
+          placeholder="填写手机号"
       />
       <van-field
           v-model="changeInf.email"
           type="text"
           name="郵箱"
-          label="Email"
-          placeholder="Setting Your Email"
+          label="邮箱"
+          placeholder="填写邮箱"
       />
       <van-field
           v-model="changeInf.wechat_id"
           name="微信號"
-          label="WeChat ID"
-          placeholder="Use to contact for daily activities"
+          label="微信号"
+          placeholder="用于日常活动联系"
       />
       <br/>
       <van-row justify="center">
         <van-button round block type="primary" @click="changeContactPre" icon="guide-o" style="width: 200px">
-          Update
+          更新联系方式
         </van-button>
       </van-row>
       <br/>
     </van-cell-group>
   </van-action-sheet>
-  <van-action-sheet v-model:show="setFastLoginShow" :z-index="100" title="Previous Device Access" style="height: 75%;">
-    <center style="font-size: 10pt; margin: 12pt">Device login is disabled. You can revoke previously registered devices below.</center>
+  <van-action-sheet v-model:show="setFastLoginShow" :z-index="100" title="历史设备权限" style="height: 75%;">
+    <center style="font-size: 10pt; margin: 12pt">设备登录已停用，你仍可移除之前登记的设备。</center>
     <van-empty
         v-show="equipments.length === 0"
         style="margin-top: 15pt"
         image="https://fastly.jsdelivr.net/npm/@vant/assets/custom-empty-image.png"
         image-size="80"
-        description="No previous devices"
+        description="暂无历史设备"
     />
     <div class="device-card" v-for="equip in equipments" :style="{ border: equip.is_local ? '4px solid #ccc' : ''}">
       <div class="device-icon">
         <i class="fas fa-device"></i>
       </div>
       <div class="device-info">
-        <div class="device-name">Name: {{equip.name}}</div>
-        <div class="device-id">Equip ID: {{equip.equip_id}}</div>
-        <van-button type="danger" size="mini" icon="delete-o" class="delete-button" @click="deleteEquipment(equip.id, equip.name)">Revoke One-Tap Access</van-button>
-        <p style="font-size: 9pt; margin-top: 3pt; margin-bottom: -6pt; color: #666666" v-if="equip.is_local">*this is current equipment</p>
+        <div class="device-name">名称：{{equip.name}}</div>
+        <div class="device-id">设备 ID：{{equip.equip_id}}</div>
+        <van-button type="danger" size="mini" icon="delete-o" class="delete-button" @click="deleteEquipment(equip.id, equip.name)">移除设备权限</van-button>
+        <p style="font-size: 9pt; margin-top: 3pt; margin-bottom: -6pt; color: #666666" v-if="equip.is_local">当前设备</p>
       </div>
     </div>
   </van-action-sheet>
   <van-cell-group inset>
     <div style="margin: 20px 20px 0px 20px">
-      {{memInf.name}}, Welcome!
+      欢迎你，{{memInf.name}}！
     </div>
     <van-cell></van-cell>
-    <van-cell title="Username" size="small">{{memInf.username}}</van-cell>
-    <van-cell title="Student ID">{{memInf.student_id}}</van-cell>
-    <van-cell title="Phone">{{memInf.phone}}</van-cell>
-    <van-cell title="Email" v-if="memInf.email !== ''">{{memInf.email}}</van-cell>
-    <van-cell title="WeChat ID">{{memInf.wechat_id}}</van-cell>
-    <van-cell title="Status">{{memberStatus}}</van-cell>
-    <van-cell title="Dishonest Points" v-if="memInf.state >= 0 && memInf.state <= 2">{{memInf.unsigned_num}}</van-cell>
-    <van-cell title="Duty Times" v-if="memInf.state === 3">{{memInf.unsigned_num}}</van-cell>
+    <van-cell title="用户名" size="small">{{memInf.username}}</van-cell>
+    <van-cell title="学号">{{memInf.student_id}}</van-cell>
+    <van-cell title="手机号">{{memInf.phone}}</van-cell>
+    <van-cell title="邮箱" v-if="memInf.email !== ''">{{memInf.email}}</van-cell>
+    <van-cell title="微信号">{{memInf.wechat_id}}</van-cell>
+    <van-cell title="账号状态">{{memberStatus}}</van-cell>
+    <van-cell title="缺席次数" v-if="memInf.state >= 0 && memInf.state <= 2">{{memInf.unsigned_num}}</van-cell>
+    <van-cell title="值班次数" v-if="memInf.state === 3">{{memInf.unsigned_num}}</van-cell>
   </van-cell-group>
   <br/>
   <van-cell-group inset>
-    <van-cell title="Operations"/>
-    <van-cell title="Password Setting"  is-link @click="onChangePassShow"/>
-    <van-cell title="Contact Update"  is-link @click="onChangeContactShow"/>
-    <van-cell title="Previous Device Access"  is-link @click="onEquipManageShow"/>
-    <van-cell title="Log Out" is-link @click="signout"/>
+    <van-cell title="账号操作"/>
+    <van-cell title="修改密码"  is-link @click="onChangePassShow"/>
+    <van-cell title="修改联系方式"  is-link @click="onChangeContactShow"/>
+    <van-cell title="历史设备权限"  is-link @click="onEquipManageShow"/>
+    <van-cell title="退出登录" is-link @click="signout"/>
   </van-cell-group>
   <br/>
   <br/>
@@ -144,6 +144,7 @@
 import Cookies from "js-cookie";
 import {showSuccessToast, showFailToast, showToast} from "vant";
 import { showConfirmDialog } from 'vant';
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   data(){
@@ -179,17 +180,17 @@ export default {
     memberStatus() {
       switch (this.memInf.state) {
         case 0:
-          return 'Blocked';
+          return '已停用';
         case 1:
-          return 'Dishonest';
+          return '参加活动受限';
         case 2:
-          return 'Normal';
+          return '正常';
         case 3:
-          return 'Duty Staff'
+          return '工作人员'
         case 4:
-          return 'Administrator'
+          return '管理员'
       }
-      return 'Unknown';
+      return '未知';
     }
   },
   created(){
@@ -213,7 +214,7 @@ export default {
     signout(){
       this.$http.post('/user/logout?token='+Cookies.get('token')).then(function (a){}).catch(function(a){});
       Cookies.remove('token');
-      showFailToast('This account has been logged out.');
+      showSuccessToast('已退出登录');
       this.$router.push('/inbox');
     },
     onChangePassShow(){
@@ -224,14 +225,15 @@ export default {
     },
     changePassPre(){
       if(this.changeInf.originPass === '' || this.changeInf.newPass === '' || this.changeInf.confirmPass === ''){
-        showFailToast('Password cannot be empty');
+        showFailToast('请输入密码');
         return;
       }
       if(this.changeInf.newPass !== this.changeInf.confirmPass){
-        showFailToast('Inconsistency between two passwords');
+        showFailToast('两次输入的新密码不一致');
         return;
       }
-      this.isChangePassVerifyShow = true;
+      if (skipPuzzleForLocalDemo()) this.onChangePassClick();
+      else this.isChangePassVerifyShow = true;
     },
     onChangePassClick(){
       this.isChangePassVerifyShow = false;
@@ -239,7 +241,7 @@ export default {
       const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}/;
       if(pattern.test(this.changeInf.newPass) === false){
         this.loading = false;
-        showToast("The currently set password does not meet the rules: The password must be at least 8 characters long and contain uppercase and lowercase letters, numbers, and special symbols");
+        showToast("密码至少 8 位，且须包含大小写字母、数字和特殊符号");
         return;
       }
       const token = Cookies.get('token');
@@ -247,53 +249,53 @@ export default {
           .then(response =>{
             this.loading = false;
             if(response.data.status <= 0){
-              showFailToast('Account Abnormal');
+              showFailToast('账号状态异常');
             }
             if(response.data.status === 1){
-              showFailToast('The original password was entered incorrectly.');
+              showFailToast('原密码错误');
             }
             if(response.data.status === 2){
-              showFailToast('Database abnormality');
+              showFailToast('数据库异常，请稍后重试');
             }
             if(response.data.status === 3){
-              showSuccessToast('Modification Successful');
+              showSuccessToast('密码修改成功');
               this.setPasswordShow = false;
             }
           })
           .catch(error =>{
             this.loading = false;
             console.log(error);
-            showSuccessToast('Modification Successful');
+            showFailToast('网络异常，密码未确认修改成功');
           });
     },
     deleteEquipment(id, name){
       showConfirmDialog({
-        message: `Remove previous device “${name}” from this account?`,
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel'
+        message: `确定移除设备“${name}”的访问权限吗？`,
+        confirmButtonText: '确认移除',
+        cancelButtonText: '取消'
       }).then(() =>{
         this.loading = true;
         this.$http.post(`/user/deleteEquipment?token=${Cookies.get('token')}&id=${id}`)
             .then(response =>{
               this.loading = false;
               if(response.data.status === -2){
-                showFailToast('Account Abnormal');
+                showFailToast('账号状态异常');
               }
               if(response.data.status === -1){
-                showFailToast('This device has been removed. Please refresh the page.');
+                showFailToast('设备已移除，请刷新页面');
               }
               if(response.data.status === 0){
-                showFailToast('This device is not in this account, please refresh the page.');
+                showFailToast('设备不属于此账号，请刷新页面');
               }
               if(response.data.status === 1){
-                showSuccessToast('Device Removal Successful');
+                showSuccessToast('设备权限已移除');
                 this.onEquipManageShow();
               }
             })
             .catch(error =>{
               this.loading = false;
               console.log(error);
-              showFailToast('Internet Error');
+              showFailToast('网络异常，请稍后重试');
             });
       }).catch(() => {});
     },
@@ -313,7 +315,7 @@ export default {
           .catch(error =>{
             this.loading = false;
             console.log(error);
-            showFailToast('Internet Error');
+            showFailToast('网络异常，请稍后重试');
           });
     },
     onChangeContactShow(){
@@ -325,18 +327,19 @@ export default {
     },
     changeContactPre(){
       if(this.changeInf.originPass === ''){
-        showFailToast('Password cannot be empty');
+        showFailToast('请输入密码');
         return;
       }
       if(this.changeInf.phone === ''){
-        showFailToast('The phone number cannot be empty.');
+        showFailToast('请输入手机号');
         return;
       }
       if(this.changeInf.wechat_id === ''){
-        showFailToast('WeChat ID can\'t be empty');
+        showFailToast('请输入微信号');
         return;
       }
-      this.isChangeContactVerifyShow = true;
+      if (skipPuzzleForLocalDemo()) this.onChangeContactClick();
+      else this.isChangeContactVerifyShow = true;
     },
     onChangeContactClick(){
       this.loading = true;
@@ -350,16 +353,16 @@ export default {
           .then(response =>{
             this.loading = false;
             if(response.data.status <= 0){
-              showFailToast('Account Abnormal');
+              showFailToast('账号状态异常');
             }
             if(response.data.status === 1){
-              showFailToast('Incorrect password, authentication failed');
+              showFailToast('密码错误，身份验证失败');
             }
             if(response.data.status === 2){
-              sshowFailToast('Database abnormality');
+              showFailToast('数据库异常，请稍后重试');
             }
             if(response.data.status === 3){
-              showSuccessToast('Contact Updates Successful');
+              showSuccessToast('联系方式已更新');
               this.memInf.wechat_id = this.changeInf.wechat_id;
               this.memInf.phone = this.changeInf.phone;
               this.memInf.email = this.changeInf.email;
@@ -369,7 +372,7 @@ export default {
           .catch(error =>{
             this.loading = false;
             console.log(error);
-            showFailToast('Internet Error ');
+            showFailToast('网络异常，请稍后重试');
           });
     },
     close(){

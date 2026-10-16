@@ -11,23 +11,23 @@
       <lay-row>
         <lay-col md="24">
           <lay-breadcrumb style="margin-left: 6pt">
-            <lay-breadcrumb-item title="Records"></lay-breadcrumb-item>
-            <lay-breadcrumb-item title="Participation"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="记录"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="报名"></lay-breadcrumb-item>
           </lay-breadcrumb>
         </lay-col>
         <lay-col md="24" style="margin-top: 4pt">
-          <lay-input v-model="preQuery.name" size="sm" type="text" style="width: 120pt" placeholder="Participant Name" prefix-icon="layui-icon-user"></lay-input>
-          <lay-input v-model="preQuery.student_id" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="Action Name" prefix-icon="layui-icon-flag"></lay-input>
-          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-1)" :disabled="loading">Query</lay-button>
+          <lay-input v-model="preQuery.name" size="sm" type="text" style="width: 120pt" placeholder="参与者姓名" prefix-icon="layui-icon-user"></lay-input>
+          <lay-input v-model="preQuery.student_id" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="活动名称" prefix-icon="layui-icon-flag"></lay-input>
+          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-1)" :disabled="loading">查询</lay-button>
         </lay-col>
       </lay-row>
     </template>
     <template #empty>
-      <lay-empty description="No Records"></lay-empty>
+      <lay-empty description="暂无记录"></lay-empty>
     </template>
     <template #resign="{ row }">
       <div v-if="row.state == 0">
-        Unsigned&nbsp; <lay-button v-if="row.action_state > 3" type="warm" size="xs" prefix-icon="layui-icon-survey" @click="onResignClick(row.id)">Re-Sign</lay-button>
+        Unsigned&nbsp; <lay-button v-if="row.action_state > 3" type="warm" size="xs" prefix-icon="layui-icon-survey" @click="onResignClick(row.id)">补签</lay-button>
       </div>
       <div v-else>
         Signed
@@ -75,13 +75,13 @@ export default {
         total: 0
       },
       columns:[
-        { title:"Participant Name", width:"120px", resize:true, key:"account_name" },
-        { title:"Student ID", width:"140px", resize:true, key:"account_student_id" },
-        { title:"Action", width:"160px", resize:true, key:"action_title"},
-        { title:"Location", width:"120px", resize:true, key:"action_place" },
-        { title:"Action Status", width:"120px", resize:true, key:"action_state_name" },
-        { title:"Racket", width:"80px", resize:true, key:"borrow_name" },
-        { title:"Sign Status", width:"120px", resize:true, customSlot: "resign"},
+        { title:"参与者姓名", width:"120px", resize:true, key:"account_name" },
+        { title:"学号", width:"140px", resize:true, key:"account_student_id" },
+        { title:"活动", width:"160px", resize:true, key:"action_title"},
+        { title:"地点", width:"120px", resize:true, key:"action_place" },
+        { title:"活动状态", width:"120px", resize:true, key:"action_state_name" },
+        { title:"球拍", width:"80px", resize:true, key:"borrow_name" },
+        { title:"签到状态", width:"120px", resize:true, customSlot: "resign"},
       ],
       dataSource:[]
     };
@@ -100,7 +100,7 @@ export default {
 &title=${encodeURIComponent(this.query.student_id)}&page_size=${this.page.limit}&page_number=${this.page.current}`)
           .then(res => {
             if(res.status !== 200){
-              layer.msg('系統錯誤', {icon: 2, time: 1500});
+              layer.msg('系统异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
               return;
             }
@@ -120,39 +120,39 @@ export default {
             this.loading = false;
           })
           .catch(error => {
-            layer.msg('網絡錯誤！', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.loading = false;
           })
     },
     computedStatusName(obj){
       switch(obj.borrow){
         case 0:
-          obj.borrow_name = 'No'; break;
+          obj.borrow_name = '否'; break;
         case 1:
-          obj.borrow_name = 'Yes'; break;
+          obj.borrow_name = '是'; break;
       }
       switch(obj.action_state){
         case 2:
-          obj.action_state_name = 'In Participating'; break;
+          obj.action_state_name = '报名中'; break;
         case 3:
-          obj.action_state_name = 'Entry Closed'; break;
+          obj.action_state_name = '报名已截止'; break;
         case 4:
-          obj.action_state_name = 'In Process'; break;
+          obj.action_state_name = '进行中'; break;
         case 5:
-          obj.action_state_name = 'Terminated'; break;
+          obj.action_state_name = '已结束'; break;
       }
     },
     onResignClick(id){
       layer.prompt({
-        title: "Need to check verification code",
+        title: "请输入签到验证码",
         formType: "text",
         placeholder: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxxxx",
         shadeClose: true,
         btn: [
           {
-            text: "Re-Sign", callback: (layero, data) => {
+            text: "补签", callback: (layero, data) => {
               if(data === ""){
-                layer.msg('Please enter the verification code and try again.',{icon: 7, time: 1500});
+                layer.msg('请输入签到验证码后重试。',{icon: 7, time: 1500});
                 return;
               }
               this.$http.post(`/action/reSign?token=${Cookies.get('token')}&record_id=${id}`, { sign_code: data })
@@ -165,37 +165,37 @@ export default {
                       if(res.data.status === -1){
                         this.disabled = false;
                         this.editActionShow = false;
-                        layer.msg('Verification code fails to complete the re-sign!',{icon: 2, time: 1500});
+                        layer.msg('验证码无效，补签失败。',{icon: 2, time: 1500});
                         layer.close(layero);
                         return;
                       }
                       if(res.data.status === 0){
                         this.disabled = false;
                         this.editActionShow = false;
-                        layer.msg('The current record has been signed, please refresh the page to update this record!',{icon: 7, time: 1500});
+                        layer.msg('该记录已经签到，请刷新页面。',{icon: 7, time: 1500});
                         layer.close(layero);
                         return;
                       }
                       if(res.data.status === 1){
                         this.disabled = false;
                         this.editActionShow = false;
-                        layer.msg('Currently enrolled events are not yet started and cannot be completed at this time!',{icon: 7, time: 1500});
+                        layer.msg('活动尚未开始，目前不能补签。',{icon: 7, time: 1500});
                         layer.close(layero);
                         return;
                       }
                       this.disabled = false;
                       this.editActionShow = false;
-                      layer.msg('This entry has been re-signed!',{icon: 1, time: 1500});
+                      layer.msg('补签成功！',{icon: 1, time: 1500});
                       layer.close(layero);
                       this.queryData();
 
                     }else{
-                      layer.msg('System Error',{icon: 1, time: 1500});
+                      layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
                       layer.close(layero);
                     }
                   })
                   .catch(res => {
-                    layer.msg('Internet Error', {icon: 2, time: 1500});
+                    layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
                     layer.close(layero);
                   });
             }

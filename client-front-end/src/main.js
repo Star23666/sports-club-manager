@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
-import Vant, {showFailToast} from 'vant'
+import Vant, {Locale, showFailToast} from 'vant'
+import zhCN from 'vant/es/locale/lang/zh-CN'
 import App from './App.vue'
 import router from './router'
 import store from './store'
@@ -12,6 +13,8 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs'
 
 import '@/assets/global.css'
 import 'vant/lib/index.css'
+
+Locale.use('zh-CN', zhCN)
 
 
 axios.defaults.timeout = 2000
@@ -94,7 +97,7 @@ app.config.globalProperties.$memberVerify = function (){
                           this.$router.push('/inbox');
                       }
                       else if(response.data.status <= 0){
-                          showFailToast("The current user status has changed, please log in again!\n");
+                          showFailToast("账号状态已变化，请重新登录");
                           Cookies.remove('token');
                           this.$router.push('/inbox');
                       }
@@ -123,7 +126,7 @@ app.config.globalProperties.$staffVerify = function (){
                     this.$router.push('/inbox');
                 }
                 else if(response.data.status <= 0){
-                    showFailToast("The current user status has changed, please log in again!\n");
+                    showFailToast("账号状态已变化，请重新登录");
                     Cookies.remove('token');
                     this.$router.push('/inbox');
                 }

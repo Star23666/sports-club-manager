@@ -1,26 +1,26 @@
 <template>
   <van-toast v-model:show="loading" type="loading" overlay="true" duration="0"
-             forbid_click="true" message="Loading..."></van-toast>
+             forbid_click="true" message="加载中..."></van-toast>
   <van-tabs v-model:active="active" sticky offset-top="56" @change="onClickTab(name)" type="card" swipeable>
-    <van-tab title="Waitlist" name="1">
+    <van-tab title="候补名单" name="1">
       <van-pull-refresh
-          pulling-text="Pull Down to Refresh..."
-          loosing-text="Release to Refresh..."
-          loading-text="Loading..."
-          success-text="Refresh Successfully..."
+          pulling-text="下拉刷新"
+          loosing-text="松开刷新"
+          loading-text="加载中..."
+          success-text="刷新成功"
           v-model="waitingRefresh"
           @refresh="onWaitingRefresh">
         <br/>
       <div v-if="waitingList.length === 0">
-        <van-empty description="No Relevant Waiting Records" />
+        <van-empty description="暂无候补记录" />
       </div>
       <van-row justify="center">
       <div v-for="item in waitingList">
         <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
-          <van-cell title="Action">{{item.action_title}}</van-cell>
-          <van-cell title="Waiting for">{{item.action_user}}</van-cell>
-          <van-cell title="Queuing Rank">{{item.wait_rank}}</van-cell>
-          <van-cell><van-button @click="onCancelClick(item.id)" type="danger" size="small" icon="cross" :disabled="buttonDisabled">Quit Waiting</van-button></van-cell>
+          <van-cell title="活动">{{item.action_title}}</van-cell>
+          <van-cell title="候补人">{{item.action_user}}</van-cell>
+          <van-cell title="候补顺位">{{item.wait_rank}}</van-cell>
+          <van-cell><van-button @click="onCancelClick(item.id)" type="danger" size="small" icon="cross" :disabled="buttonDisabled">退出候补</van-button></van-cell>
         </van-cell-group>
         <br/>
       </div>
@@ -29,27 +29,27 @@
       <br/>
       <br/>
     </van-tab>
-    <van-tab title="Transfer Receipt" name="2">
+    <van-tab title="接收转让" name="2">
       <van-pull-refresh
-          pulling-text="Pull Down to Refresh..."
-          loosing-text="Release to Refresh..."
-          loading-text="Loading..."
-          success-text="Refresh Successfully..."
+          pulling-text="下拉刷新"
+          loosing-text="松开刷新"
+          loading-text="加载中..."
+          success-text="刷新成功"
           v-model="transferRefresh"
           @refresh="onTransferRefresh">
       <br/>
         <div v-if="presentList.length === 0">
-          <van-empty description="No Transfers Available Yet" />
+          <van-empty description="暂无可接收的转让" />
         </div>
       <van-row justify="center">
       <div v-for="item in presentList">
         <van-cell-group inset style="width: 360px; max-width: calc(100vw - 32px); box-sizing: border-box">
-          <van-cell title="Action Name">{{item.action_title}}</van-cell>
-          <van-cell title="Initiator">{{item.send_user}}</van-cell>
-          <van-cell title="Recipient">{{item.receive_user == '' ? 'Anyone' : item.receive_user}}</van-cell>
+          <van-cell title="活动名称">{{item.action_title}}</van-cell>
+          <van-cell title="转出者">{{item.send_user}}</van-cell>
+          <van-cell title="接收者">{{item.receive_user == '' ? '任何符合条件的会员' : item.receive_user}}</van-cell>
           <van-cell>
-            <van-button @click="onRefuseClick(item.id)" v-if="item.receive_user != ''" type="danger" size="small" icon="cross">Refuse</van-button>&nbsp
-            <van-button @click="onAcceptClick(item.id)" type="success" size="small" icon="success">Accept</van-button>
+            <van-button @click="onRefuseClick(item.id)" v-if="item.receive_user != ''" type="danger" size="small" icon="cross">拒绝</van-button>&nbsp
+            <van-button @click="onAcceptClick(item.id)" type="success" size="small" icon="success">接受</van-button>
           </van-cell>
         </van-cell-group>
         <br/>
@@ -97,11 +97,11 @@ export default {
     onCancelClick(id){
       this.currentId = id;
       showConfirmDialog({
-        title: 'Alarm',
-        confirmButtonText: 'Quit Waiting',
-        cancelButtonText: 'Cancel',
+        title: '确认退出候补',
+        confirmButtonText: '退出候补',
+        cancelButtonText: '取消',
         message:
-            'After quiting waiting, you need to queue up again. Please consider carefully whether to quit from the waitlist!',
+            '退出后如想再次候补，需要重新排队。确定退出吗？',
       }).then(() => {
         this.loading = true;
         this.buttonDisabled = true;
@@ -110,24 +110,24 @@ export default {
             .then(response => {
               this.loading = false;
               if(response.status !== 200){
-                showFailToast("System Error");
+                showFailToast("系统异常，请稍后重试");
                 this.buttonDisabled = false;
               }
               if(response.data.status === -2){
                 this.$memberVerify();
               }
               if(response.data.status === -1){
-                showFailToast("The waiting may have been successfully added or the action may have ended. Please refresh the page.");
+                showFailToast("候补记录已变化或活动已结束，请刷新页面");
                 this.onWaitingRefresh();
                 this.buttonDisabled = false;
               }
               if(response.data.status === 0){
-                showFailToast("User information does not match the alternate record");
+                showFailToast("此候补记录不属于你");
                 this.onWaitingRefresh();
                 this.buttonDisabled = false;
               }
               if(response.data.status === 1){
-                showSuccessToast("Cancelled the waiting list successfully");
+                showSuccessToast("已退出候补");
                 this.onWaitingRefresh();
                 this.buttonDisabled = false;
               }
@@ -135,7 +135,7 @@ export default {
             .catch(error => {
               this.loading = false;
               console.log(error);
-              showFailToast("Internet Error");
+              showFailToast("网络异常，请稍后重试");
               this.buttonDisabled = false;
             });
       }).catch(() => {});
@@ -143,41 +143,41 @@ export default {
     onRefuseClick(id){
       this.currentId = id;
       showConfirmDialog({
-        title: 'Alarm',
-        confirmButtonText: 'Refuse',
-        cancelButtonText: 'Cancel',
+        title: '确认拒绝转让',
+        confirmButtonText: '拒绝',
+        cancelButtonText: '取消',
         message:
-            'After refusing to accept the transfer, the other party will need to initiate the transfer again. Please consider carefully.',
+            '拒绝后，对方需要重新发起转让。确定拒绝吗？',
       }).then(() => {
         this.loading = true;
         this.$http.post(`transfer/refuseTransfer?token=${Cookies.get('token')}&transfer_id=${this.currentId}`)
             .then(response => {
               this.loading = false;
               if(response.status !== 200){
-                showFailToast("系統錯誤");
+                showFailToast("系统异常，请稍后重试");
                 this.buttonDisabled = false;
               }
               if(response.data.status === -2){
                 this.$memberVerify();
               }
               if(response.data.status === -1){
-                showFailToast("The action has started or the transfer has been accepted, resulting in the transfer being invalidated. The page will be refreshed automatically.");
+                showFailToast("活动已开始或转让已被接受，页面将刷新");
                 this.onTransferRefresh();
                 this.buttonDisabled = false;
               }
               if(response.data.status === 0){
-                showFailToast("The current user information does not match, please try again later\n");
+                showFailToast("此转让不属于你，请稍后重试");
                 this.buttonDisabled = false;
                 this.onWaitingRefresh();
               }
               if(response.data.status === 1){
-                showFailToast("You have declined to receive this registration transfer");
+                showFailToast("已拒绝该转让");
                 this.onTransferRefresh();
                 this.buttonDisabled = false;
               }
             })
             .catch(error => {
-              showFailToast("Internet Error");
+              showFailToast("网络异常，请稍后重试");
               this.loading = false;
               this.buttonDisabled = false;
             });
@@ -190,34 +190,34 @@ export default {
           .then(response => {
             this.loading = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               this.buttonDisabled = false;
             }
             if(response.data.status === -2){
               this.$memberVerify();
             }
             if(response.data.status === -1){
-              showFailToast("The action has started or this transfer has been accepted by someone else, making it invalid.\n");
+              showFailToast("活动已开始或转让已被其他人接受");
               this.onTransferRefresh();
               this.buttonDisabled = false;
             }
             if(response.data.status === 0){
-              showFailToast("The current user has lost his credibility and cannot accept transfers without a designated recipient!\n");
+              showFailToast("无法接受该转让，可能名额已失效或账号受限");
               this.onTransferRefresh();
               this.buttonDisabled = false;
             }
             if(response.data.status === 1){
-              showFailToast("You have already participated in this action and cannot participate in it again by receiving a transfer!\n");
+              showFailToast("你已参加该活动，不能再次接收名额");
               this.buttonDisabled = false;
             }
             if(response.data.status === 2){
-              showSuccessToast("The transfer has been successfully received. Please check the record in 'Participation' and attend the action on time.\n");
+              showSuccessToast('已接收转让，请到“我的报名”查看并按时参加');
               this.onTransferRefresh();
               this.buttonDisabled = false;
             }
           })
           .catch(error => {
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.buttonDisabled = false;
           });
     },

@@ -1,17 +1,17 @@
 <template>
   <div>
     <Vcode :show="isShow"
-           slider-text="Drag Slider to Complete Puzzle"
-           fail-text="Verification Failed, Please Try Again"
-           success-text="Verification Passed"
+           slider-text="拖动滑块完成验证"
+           fail-text="验证失败，请重试"
+           success-text="验证通过"
            :range="5"
            @success="success"
            @close="close"
     />
   </div>
   <van-nav-bar
-      title="Create New Account"
-      left-text="Back"
+      title="注册新账号"
+      left-text="返回"
       left-arrow
       fixed
       @click-left="onClickLeft"
@@ -20,94 +20,94 @@
   <br/>
   <br/>
   <van-cell-group inset>
-    <van-cell title="Information Registration" label="Welcome! Please fill in the following information to complete your account registration. After approval, you can sign up and participate in club activities!" />
+    <van-cell title="填写注册信息" label="请填写以下资料。审核通过后，即可报名参加俱乐部活动。" />
   </van-cell-group>
   <br/>
   <van-form @submit="onSubmit">
     <van-cell-group inset>
-      <van-cell title="Account Information"/>
+      <van-cell title="账号信息"/>
       <van-field
           v-model="username"
           name="賬號"
-          label="Username"
-          placeholder="only consist letters and numbers"
-          :rules="[{ required: true, message: 'Please fill username' }]"
+          label="用户名"
+          placeholder="仅支持字母和数字"
+          :rules="[{ required: true, message: '请输入用户名' }]"
       />
       <van-field
           v-model="password"
           type="password"
           name="密碼"
-          label="Password"
-          placeholder="Setting your password"
-          :rules="[{ required: true, message: 'Please fill password' }]"
+          label="密码"
+          placeholder="设置密码"
+          :rules="[{ required: true, message: '请输入密码' }]"
       />
       <van-field
           v-model="password_confirm"
           type="password"
           name="密碼"
-          label="Comfirm"
-          placeholder="Input your password again"
-          :rules="[{ required: true, message: 'Please fill password again' }]"
+          label="确认密码"
+          placeholder="再次输入密码"
+          :rules="[{ required: true, message: '请再次输入密码' }]"
       />
     </van-cell-group>
     <br/>
     <van-cell-group inset>
-      <van-cell title="Personal Information"/>
+      <van-cell title="个人信息"/>
       <van-field
           v-model="student_name"
           name="Name"
-          label="Name"
-          placeholder="Name on identity document"
-          :rules="[{ required: true, message: 'Please fill your name' }]"
+          label="姓名"
+          placeholder="填写真实姓名"
+          :rules="[{ required: true, message: '请输入姓名' }]"
       />
       <van-field
           v-model="student_id"
           name="Student ID"
-          label="Student ID"
-          placeholder="Numbers on student ID card"
-          :rules="[{ required: true, message: 'Please fill your student ID' }]"
+          label="学号"
+          placeholder="填写学生证上的学号"
+          :rules="[{ required: true, message: '请输入学号' }]"
       />
       <van-field
           v-model="member_id"
           name="會員卡號"
-          label="Member ID"
-          placeholder="Number on Membership Card"
-          :rules="[{ required: true, message: 'Please fill your Member ID' }]"
+          label="会员卡号"
+          placeholder="填写会员卡号"
+          :rules="[{ required: true, message: '请输入会员卡号' }]"
       />
     </van-cell-group>
     <br/>
     <van-cell-group inset>
-      <van-cell title="Contact Details"/>
+      <van-cell title="联系方式"/>
       <van-field
           v-model="phone"
           type="tel"
           name="Phone"
-          label="Phone"
-          placeholder="Need to add prefix (+86, +853)"
-          :rules="[{ required: true, message: 'Please fill phone number！' }]"
+          label="手机号"
+          placeholder="请包含区号，如 +86"
+          :rules="[{ required: true, message: '请输入手机号' }]"
       />
       <van-field
           v-model="wechat_id"
           name="Wechat ID"
-          label="Wechat ID"
-          placeholder="Use to contact for daily activities"
-          :rules="[{ required: true, message: 'Please fill Wechat ID！' }]"
+          label="微信号"
+          placeholder="用于活动联系"
+          :rules="[{ required: true, message: '请输入微信号' }]"
       />
       <van-field
           v-model="email"
           name="Email"
-          label="Email"
-          placeholder="Allow to be empty"
+          label="邮箱"
+          placeholder="可不填写"
       />
     </van-cell-group>
     <br/>
     <van-row justify="center">
       <van-space :size="20">
         <van-button round block type="warning" :disabled="disabled" native-type="submit" icon="guide-o" >
-          Submit Registration
+          提交注册
         </van-button>
         <van-button round block type="default" :disabled="disabled" icon="replay" @click="onRewrite">
-          Rewrite
+          重填
         </van-button>
       </van-space>
     </van-row>
@@ -117,6 +117,7 @@
 
 <script>
 import {showFailToast, showSuccessToast, showToast, Toast} from 'vant';
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 export default {
   setup() {
     const onClickLeft = () => history.back();
@@ -143,10 +144,11 @@ export default {
     onSubmit(){
       if(this.password !== this.password_confirm){
         this.password = this.password_confirm = "";
-        showFailToast("The passwords you entered twice do not match. Please re-enter.\n");
+        showFailToast("两次输入的密码不一致，请重新输入");
         return;
       }
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.success();
+      else this.isShow = true;
     },
     onRewrite(){
       this.username = '';
@@ -164,7 +166,7 @@ export default {
       const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}/;
       if(pattern.test(this.password) === false){
         this.disabled = false;
-        showToast("The currently set password does not meet the rules: The password must be at least 8 characters long and contain uppercase and lowercase letters, numbers, and special symbols");
+        showToast("密码至少 8 位，且须包含大小写字母、数字和特殊符号");
         this.isShow = false;
         return;
       }
@@ -176,20 +178,20 @@ export default {
           .then(data => {
             console.log(data);
             if(data.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
             }
             if(data.data.status === -1){
-              showFailToast(data.data.data);
+              showFailToast(data.data.data === 'Invalid Password Format' ? '密码格式不符合要求' : '用户名已存在，请更换后重试');
               this.password = this.password_confirm = '';
             }
             if(data.data.status === 0){
-              showSuccessToast(data.data.data);
+              showSuccessToast('注册成功，请等待管理员审核');
               this.$router.push("/login");
             }
             this.disabled = false;
           })
           .catch(error =>{
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.disabled = false;
           });
       this.isShow = false; // 通过验证后，需要手动隐藏模态框

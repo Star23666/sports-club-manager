@@ -1,14 +1,14 @@
 <template>
   <van-pull-refresh
-      pulling-text="Pull Down to Refresh..."
-      loosing-text="Release to Refresh..."
-      loading-text="Loading..."
-      success-text="Refresh Successfully..."
+      pulling-text="下拉刷新"
+      loosing-text="松开刷新"
+      loading-text="加载中..."
+      success-text="刷新成功"
       v-model="isLoading"
       @refresh="onRefresh"
   >
     <div v-if="workList.length === 0">
-      <van-empty description="No Duty Arrangement" />
+      <van-empty description="暂无值班安排" />
     </div>
     <van-row justify="center">
       <div v-for="(item, index) in workList">
@@ -23,33 +23,33 @@
           <van-row justify="center" style="margin: -20px 0px 0px 0px;">
             <h4>{{item.action_title}}</h4>
           </van-row>
-          <van-cell title="Duty Date">{{item.action_date}}</van-cell>
-          <van-cell title="Duty Time">{{item.action_time_range}}</van-cell>
-          <van-cell title="Duty Location">{{item.action_place}}</van-cell>
-          <van-cell title="Racket Requirement">{{item.borrow_num}} {{item.borrow_num > 1 ? "rackets" : "racket"}} </van-cell>
-          <van-cell title="Participant List">
+          <van-cell title="值班日期">{{item.action_date}}</van-cell>
+          <van-cell title="活动时间">{{item.action_time_range}}</van-cell>
+          <van-cell title="活动地点">{{item.action_place}}</van-cell>
+          <van-cell title="需借球拍">{{item.borrow_num}} 把</van-cell>
+          <van-cell title="参加者名单">
             <template #label style="font-size: 8pt" v-if="item.action_member_show">
-              *Expand to Check Them
+              展开查看参加者
             </template>
-            <van-button v-if="!item.action_member_show" :disabled="disabled" type="primary" icon="add-o" size="mini" @click="onMemberQuery(index)">Detail</van-button>
+            <van-button v-if="!item.action_member_show" :disabled="disabled" type="primary" icon="add-o" size="mini" @click="onMemberQuery(index)">查看详情</van-button>
           </van-cell>
           <van-collapse v-model="item.action_names" v-if="item.action_member_show">
             <van-collapse-item v-for="j in item.action_member_list" :title="j.name" :name="j.student_id">
-              Student ID：{{j.student_id}}
+              学号：{{j.student_id}}
               <br/>
-              WeChat ID：{{j.wechat_id}}
+              微信号：{{j.wechat_id}}
               <br/>
-              Phone Number：{{j.phone}}
+              手机号：{{j.phone}}
               <br/>
-              Racket Requirement：{{j.borrow ? "Need a Racket" : "No Requirement"}}
+              球拍：{{j.borrow ? "需要借用" : "无需借用"}}
             </van-collapse-item>
           </van-collapse>
           <van-cell>
-            <div v-if="item.action_state === 1">Preparing</div>
-            <div v-else-if="item.action_state === 2">Enrolling</div>
-            <van-button v-else-if="item.action_state === 3" @click="onBeginClick(index)" type="success" size="small" icon="play-circle-o" :disabled="disabled">Start Action</van-button>&nbsp
-            <van-button v-else-if="item.action_state === 4" @click="onEndClick(index)" type="danger" size="small" icon="stop-circle-o" :disabled="disabled">Terminal Action</van-button>
-            <div v-else>Finished</div>
+            <div v-if="item.action_state === 1">准备中</div>
+            <div v-else-if="item.action_state === 2">报名中</div>
+            <van-button v-else-if="item.action_state === 3" @click="onBeginClick(index)" type="success" size="small" icon="play-circle-o" :disabled="disabled">开始签到</van-button>&nbsp
+            <van-button v-else-if="item.action_state === 4" @click="onEndClick(index)" type="danger" size="small" icon="stop-circle-o" :disabled="disabled">结束活动</van-button>
+            <div v-else>已结束</div>
           </van-cell>
         </van-cell-group>
         <br/>
@@ -113,7 +113,7 @@ export default {
               this.workList[i].action_member_show = false;
           })
           .catch(error =>{
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             console.log(error);
           });
       this.isLoading = false;
@@ -123,26 +123,26 @@ export default {
       this.$http.post(`/staff/startSign?token=${Cookies.get('token')}&action_id=${this.workList[index].id}`)
           .then(response => {
             if(response.status !== 200)
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
             if(response.data.status < 0)
               this.$staffVerify();
             if(response.data.status === 0)
-              showFailToast("Please refresh the page and try again");
+              showFailToast("请刷新页面后重试");
             if(response.data.status === 1)
-              showFailToast("Enrollment is not yet closed, please try again later.");
+              showFailToast("报名尚未截止，请稍后再试");
             if(response.data.status === 2)
-              showFailToast("Current account not on duty for this action");
+              showFailToast("你不是该活动的值班人员");
             if(response.data.status === 3)
-              showFailToast("The current action is not yet ready for check-in, please try again later.");
+              showFailToast("活动尚未开放签到，请稍后再试");
             if(response.data.status === 4){
-              showSuccessToast("This action has been opened, please sign in for the students.");
+              showSuccessToast("签到已开放，请为参加者签到");
               this.workList[index].action_state = 4;
             }
             this.disabled=false;
           })
           .catch(error =>{
             console.log(error);
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.disabled=false;
           });
     },
@@ -151,26 +151,26 @@ export default {
       this.$http.post(`/staff/stopAction?token=${Cookies.get('token')}&action_id=${this.workList[index].id}`)
           .then(response => {
             if(response.status !== 200)
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
             if(response.data.status < 0)
               this.$staffVerify();
             if(response.data.status === 0)
-              showFailToast("Please refresh the page and try again");
+              showFailToast("请刷新页面后重试");
             if(response.data.status === 1)
-              showFailToast("Enrollment is not yet open, please try again later.");
+              showFailToast("活动状态不允许结束，请稍后再试");
             if(response.data.status === 2)
-              showFailToast("Current account not on duty for this action");
+              showFailToast("你不是该活动的值班人员");
             if(response.data.status === 3)
-              showFailToast("The current action is not allowed to terminate yet, please try again later.");
+              showFailToast("尚未到活动结束时间，请稍后再试");
             if(response.data.status === 4){
-              showSuccessToast("The current action has ended, thank you for your duty, hard work!");
+              showSuccessToast("活动已结束，感谢值班");
               this.workList[index].action_state = 5;
             }
             this.disabled=false;
           })
           .catch(error =>{
             console.log(error);
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.disabled=false;
           });
     },
@@ -187,7 +187,7 @@ export default {
           })
           .catch(error =>{
             console.log(error);
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.disabled=false;
           });
       /*this.workList[index].action_member_show = true;

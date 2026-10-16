@@ -1,60 +1,58 @@
 <template>
   <van-toast v-model:show="loading" type="loading" overlay="true" duration="0"
-             forbid_click="true" message="Loading..."></van-toast>
+             forbid_click="true" message="加载中..."></van-toast>
   <Vcode :show="isShow"
-         slider-text="Drag Slider to Complete Puzzle"
-         fail-text="Verification Failed, Please Try Again"
-         success-text="Verification Passed"
+         slider-text="拖动滑块完成验证"
+         fail-text="验证失败，请重试"
+         success-text="验证通过"
          :range="5"
          @success="send_transfor"
          @close="close"
   />
-  <van-action-sheet v-model:show="transfor_show" title="Initiate a Transfer" z-index="100">
+  <van-action-sheet v-model:show="transfor_show" title="发起名额转让" z-index="100">
     <van-cell-group>
-      <van-cell title="Transfer Instructions" label="If you are unable to participate in an activity for which registration is closed, you may try to transfer your registration to a student who needs it. However, please note that once a transfer is made, it cannot be withdrawn, and the enrollment will be automatically changed from your account after the other person accepts the transfer! Please fill in the full username of the student you want to receive, so that the student you want to receive can check the “Transfer and Wait” after the transfer is initiated. If you don\'t want to specify a specific student to be accepted, you can leave the “username” field blank, which will allow any non-blocked student, including yourself, to accept your transfer!"/>
+      <van-cell title="转让说明" label="报名截止后如无法参加，可将名额转让给其他会员。转让发起后不能撤回，对方接受后名额会自动从你的账号转出。填写接收者的完整用户名可指定转让；留空则为公开转让，任何未被限制的会员都可接受。"/>
       <van-field
           v-model="username"
           name="username"
-          label="Username"
-          placeholder="Account to be Received"
+          label="接收用户名"
+          placeholder="留空表示公开转让"
       />
       <br/>
       <van-row justify="center">
         <van-button round block type="success" @click="send_transfor_first" icon="guide-o" style="width: 200px">
-          Transfer Initiation
+          发起转让
         </van-button>
       </van-row>
       <br/>
     </van-cell-group>
   </van-action-sheet>
-  <van-action-sheet v-model:show="wechat_show" title="Join WeChat Group" z-index="100">
+  <van-action-sheet v-model:show="wechat_show" title="加入活动微信群" z-index="100">
     <van-cell-group>
-      <van-cell title="Notice">
+      <van-cell title="温馨提示">
         <template #label>
-          Please long press the QR code below and select “Scan QR Code” to join the wechat group after the jump.
-          Please use your registered WeChat {{wechat_id}} join this group. If you join under a different account, you may be removed from the chat by the administrator.
-          If your WeChat account has changed, please update your contact information in a timely manner.
+          长按下方二维码识别后加入微信群。请使用注册时填写的微信号 {{wechat_id}} 入群；若使用其他账号，管理员可能将其移出。微信号变更后请及时更新联系方式。
         </template>
       </van-cell>
       <van-row justify="center" style="margin: 0px 0px 0px 0px; font-size: 10pt; color: gray">
         <vue-qrcode :value="wechat_url" :width="300"/>
       </van-row>
       <van-row justify="center" style="margin: 0px 0px 0px 0px; font-size: 8pt; color: gray">
-        *Long press QR code to join the group, for account owner only
+        仅供本人使用，请勿转发二维码
       </van-row>
       <br/>
     </van-cell-group>
   </van-action-sheet>
   <van-pull-refresh
-      pulling-text="Pull Down to Refresh..."
-      loosing-text="Release to Refresh..."
-      loading-text="Loading..."
-      success-text="Refresh Successfully..."
+      pulling-text="下拉刷新"
+      loosing-text="松开刷新"
+      loading-text="加载中..."
+      success-text="刷新成功"
       v-model="isLoading"
       @refresh="onRefresh"
   >
     <div v-if="recordList.length === 0">
-      <van-empty description="No Participation Record" />
+      <van-empty description="暂无报名记录" />
     </div>
     <van-row justify="center">
       <div v-for="item in recordList">
@@ -70,10 +68,10 @@
             {{item.action_title}}
           </van-row>
           <van-row justify="center" style="margin: 0px 0px 0px 0px; font-size: 9pt; color: gray">
-            Time: {{item.action_time_range}} &nbsp; {{item.action_date}}
+            时间：{{item.action_time_range}} &nbsp; {{item.action_date}}
           </van-row>
           <van-row justify="center" style="margin: 0px 0px 0px 0px; font-size: 9pt; color: gray">
-            Location: {{item.action_place}} &nbsp; &nbsp; Racket: {{item.borrow ? 'Borrowed' : 'Unborrowed'}}
+            地点：{{item.action_place}} &nbsp; &nbsp; 球拍：{{item.borrow ? '需要借用' : '无需借用'}}
           </van-row>
           <van-row justify="center" style="margin: 0px 0px 0px 0px; font-size: 9pt; color: gray">
             {{item.account_name}}({{item.account_student_id}})
@@ -86,7 +84,7 @@
             <vue-qrcode :value="item.sign_code" :width="240"/>
           </van-row>
           <van-row justify="center" style="margin: 0px 0px 10px 0px; font-size: 8pt; color: gray">
-            *Please show this code to verify, for account owner only
+            签到时请出示此码，仅供本人使用
           </van-row>
 
           <van-divider/>
@@ -94,19 +92,19 @@
           <van-cell style="margin: -38px 0px 10px 0px;">
             <template #title>
               <div style="font-size: 9pt; margin: 6px 0px 0px 10px; font-weight: bold;">
-                {{item.state == 1 ? "Signed" : "Unsigned"}}
+                {{item.state == 1 ? "已签到" : "未签到"}}
               </div>
             </template>
             <div v-if="item.action_state < 4">
-              <van-button v-if="item.action_state === 3" @click="onTransforClick(item.id)" type="warning" size="mini" icon="share-o">Transfer</van-button>&nbsp
-              <van-button v-if="item.action_state === 3" @click="onWechatClick(item.id)" type="success" size="mini" icon="chat-o">WeChat</van-button>
-              <van-button v-if="item.action_state < 3" @click="onCanclClick(item.id)" type="danger" size="mini" icon="cross" :disabled="buttonDisabled">Quit Participation</van-button>
+              <van-button v-if="item.action_state === 3" @click="onTransforClick(item.id)" type="warning" size="mini" icon="share-o">转让</van-button>&nbsp
+              <van-button v-if="item.action_state === 3" @click="onWechatClick(item.id)" type="success" size="mini" icon="chat-o">微信群</van-button>
+              <van-button v-if="item.action_state < 3" @click="onCanclClick(item.id)" type="danger" size="mini" icon="cross" :disabled="buttonDisabled">取消报名</van-button>
             </div>
             <div v-else-if="item.action_state == 4" style="font-size: 8pt; color: red; font-weight: bold; margin: 7px 0px 0px 0px;">
-              In Progress
+              进行中
             </div>
             <div v-else style="font-size: 8pt; color: black; margin: 7px 0px 0px 0px;">
-              Terminated
+              已结束
             </div>
           </van-cell>
         </van-cell-group>
@@ -122,6 +120,7 @@
 import VueQrcode from 'vue-qrcode';
 import {showConfirmDialog, showFailToast, showSuccessToast} from 'vant';
 import Cookies from "js-cookie";
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   components: {VueQrcode},
@@ -180,11 +179,11 @@ export default {
     onCanclClick(id) {
       this.currentId = id;
       showConfirmDialog({
-        title: 'Alarm',
-        confirmButtonText: 'Continue',
-        cancelButtonText: 'Cancel',
+        title: '确认取消报名',
+        confirmButtonText: '继续取消',
+        cancelButtonText: '返回',
         message:
-            'After you quiting the participation, the vacant quota will be given to students on the waiting list in order of priority when there are students on the waiting list. This may result in you being unable to re-participate, so please consider carefully whether to continue!',
+            '取消后，空出的名额会优先递补给候补会员，你可能无法再次报名。确定继续吗？',
       }).then(() => {
             this.buttonDisabled = true;
             this.loading = true;
@@ -193,26 +192,26 @@ export default {
                 .then(response => {
                   this.loading = false;
                   if(response.status !== 200){
-                    showFailToast("System Error");
+                    showFailToast("系统异常，请稍后重试");
                     this.buttonDisabled = false;
                   }
                   if(response.data.status === -2){
                     this.$memberVerify();
                   }
                   if(response.data.status === -1){
-                    showFailToast("The record does not exist, please refresh the page");
+                    showFailToast("记录不存在，请刷新页面");
                     this.buttonDisabled = false;
                   }
                   if(response.data.status === 0){
-                    showFailToast("The current action has ended for participation and cannot be canceled");
+                    showFailToast("活动已截止，不能取消报名");
                     this.buttonDisabled = false;
                   }
                   if(response.data.status === 1){
-                    showFailToast("User information does not match records");
+                    showFailToast("此报名记录不属于你");
                     this.buttonDisabled = false;
                   }
                   if(response.data.status === 2){
-                    showSuccessToast("Quit participation successful!");
+                    showSuccessToast("报名已取消");
                     this.onRefresh();
                     this.buttonDisabled = false;
                   }
@@ -220,7 +219,7 @@ export default {
                 .catch(error => {
                   this.loading = false;
                   console.log(error);
-                  showFailToast("Internet Error");
+                  showFailToast("网络异常，请稍后重试");
                   this.buttonDisabled = false;
                 });
       }).catch(() => {});
@@ -234,11 +233,11 @@ export default {
           .then(response => {
             this.loading = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               this.buttonDisabled = false;
             }
             if(response.data.status <= 0){
-              showFailToast("Please refresh the page and try again");
+              showFailToast("请刷新页面后重试");
               this.buttonDisabled = false;
             }
             if(response.data.status > 0){
@@ -249,7 +248,7 @@ export default {
           })
           .catch(error => {
             this.loading = false;
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.buttonDisabled = false;
           })
 
@@ -258,7 +257,8 @@ export default {
       this.isShow = false;
     },
     send_transfor_first(){
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.send_transfor();
+      else this.isShow = true;
     },
     send_transfor(){
       this.loading = true;
@@ -270,46 +270,46 @@ export default {
           .then(response => {
             this.loading = false;
             if(response.status !== 200){
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               this.buttonDisabled = false;
             }
             if(response.data.status === -2){
               this.$memberVerify();
             }
             if(response.data.status === -1){
-              showFailToast("Please refresh the page and try again");
+              showFailToast("请刷新页面后重试");
               this.buttonDisabled = false;
               this.transfor_show = false;
             }
             if(response.data.status === 0){
-              showFailToast("The current action is already in progress/has terminated, so the transfer cannot be initiated.");
+              showFailToast("活动已开始或结束，不能发起转让");
               this.buttonDisabled = false;
               this.transfor_show = false;
               this.onRefresh();
             }
             if(response.data.status === 1){
-              showFailToast("The account does not match, please refresh the page and try again");
+              showFailToast("账号与记录不匹配，请刷新后重试");
               this.buttonDisabled = false;
               this.transfor_show = false;
             }
             if(response.data.status === 2){
-              showFailToast("The current record has been transferred. Please wait patiently for the receiving user to complete the operation.");
+              showFailToast("该名额已发起转让，请等待对方处理");
               this.buttonDisabled = false;
               this.transfor_show = false;
             }
             if(response.data.status === 3){
-              showFailToast("The receiving user message was not found. Please check carefully whether the username is complete and correct.");
+              showFailToast("找不到接收者，请核对完整用户名");
               this.buttonDisabled = false;
             }
             if(response.data.status === 4){
-              showSuccessToast("The transfer is successful and the other party will receive your transfer");
+              showSuccessToast("转让已发起，等待对方接受");
               this.buttonDisabled = false;
               this.transfor_show = false;
             }
           })
           .catch(error => {
             this.loading = false;
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
             this.buttonDisabled = false;
           });
     }

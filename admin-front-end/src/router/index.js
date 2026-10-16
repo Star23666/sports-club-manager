@@ -54,49 +54,49 @@ const routes = [
     path: '/main',
     name: 'home',
     component: HomeView,
-    meta:{title: "Club Admin"},
+    meta:{title: "体育俱乐部管理后台"},
     children:[
       { path: '',
         redirect: '/main/inbox'},
       {
         path: '/main/inbox',
         component: () => import('@/views/Inbox.vue'),
-        meta: {title: 'Club Admin - Home'},
+        meta: {title: '管理后台 · 首页'},
       },
       {
         path: '/main/user/',
         component: () => import('@/views/UserList.vue'),
-        meta: {title: 'Club Admin - Account Management', keepAlive: false},
+        meta: {title: '管理后台 · 账号管理', keepAlive: false},
       },
       {
         path: '/main/user/approve',
         component: () => import('@/views/UserReviewList.vue'),
-        meta: {title: 'Club Admin - Account Verification'},
+        meta: {title: '管理后台 · 账号审核'},
       },
       {
         path: '/main/user/credit',
         component: () => import('@/views/UserUnsignedList.vue'),
-        meta: {title: 'Club Admin - Dishonesty'},
+        meta: {title: '管理后台 · 缺席记录'},
       },
       {
         path: '/main/action/create',
         component: () => import('@/views/ActionCreate.vue'),
-        meta: {title: 'Club Admin - Action Creation'},
+        meta: {title: '管理后台 · 创建活动'},
       },
       {
         path: '/main/action',
         component: () => import('@/views/ActionList.vue'),
-        meta: {title: 'Club Admin - Actions Management'},
+        meta: {title: '管理后台 · 活动管理'},
       },
       {
         path: '/main/records',
         component: () => import('@/views/RecordsList.vue'),
-        meta: {title: 'Club Admin - Participation Records'},
+        meta: {title: '管理后台 · 报名记录'},
       },
       {
         path: '/main/records/worker',
         component: () => import('@/views/WorkRecordsList.vue'),
-        meta: {title: 'Club Admin - Duties Records'},
+        meta: {title: '管理后台 · 值班记录'},
       }
     ]
   },
@@ -104,12 +104,12 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('@/views/Login.vue'),
-    meta:{title: "Club Admin - Login"}
+    meta:{title: "管理后台 · 登录"}
   },
   {
     path: '/:catchAll(.*)',
     name: '404',
-    meta: {title: '404 Not Found'},
+    meta: {title: '页面不存在'},
     component: () => import('../views/404.vue')
   }
 ]
@@ -124,7 +124,7 @@ router.beforeEach(async (to, from, next) => {
   if(to.name !== '404') {
     if(to.name !== 'Login' && Cookies.get('token') === undefined) {
       if(from.name !== 'Login' && from.path !== '/'){
-        layer.msg( "Current account has been logged out, please login again");
+        layer.msg("当前账号已退出，请重新登录");
       }
       next('/login');
     }
@@ -132,12 +132,12 @@ router.beforeEach(async (to, from, next) => {
       try{
         const response = await Service.post('/user/verify?token=' + Cookies.get('token'));
         if(response.status !== 200){
-          layer.msg("The status changed, please login again");
+          layer.msg("账号状态已变化，请重新登录");
           Cookies.remove('token');
           next('/login');
         }
         if(response.data.status <= 0){
-          layer.msg("The status changed, please login again");
+          layer.msg("账号状态已变化，请重新登录");
           Cookies.remove('token');
           next('/login');
         }
@@ -145,7 +145,7 @@ router.beforeEach(async (to, from, next) => {
           next('/main');
       }
       catch (error) {
-        layer.msg("Internet Error", {icon: 2});
+        layer.msg("网络异常，请稍后重试", {icon: 2});
         Cookies.remove('token');
         next('/login');
       }

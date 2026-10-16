@@ -1,83 +1,83 @@
 <template xmlns="http://www.w3.org/1999/html">
   <lay-layer v-model="loading" type="3" shade-close="false"/>
   <lay-layer v-model="disabled" type="3" shade-close="false"/>
-  <lay-layer v-model="editUserShow" title="Account Edit" :area="['600px', '620px']" z-index="1000">
+  <lay-layer v-model="editUserShow" title="编辑账号" :area="['600px', '620px']" z-index="1000">
     <lay-form :model="editUserInf">
-      <lay-quote>Account Information</lay-quote>
+      <lay-quote>账号信息</lay-quote>
       <lay-row space="10" style="margin-top: 10pt; width: 590px">
         <lay-col md="14">
-          <lay-form-item label="Username" prop="text" style="text-align: left"  label-width="100px" required>
+          <lay-form-item label="用户名" prop="text" style="text-align: left"  label-width="100px" required>
             <lay-input v-model="editUserInf.username" type="test" style="width: 222px"></lay-input>
           </lay-form-item>
         </lay-col>
         <lay-col md="10">
-          <lay-form-item label="Status" prop="text">
-            <lay-select v-model="editUserInf.state" placeholder="Select..." style="width: 150px">
-              <lay-select-option :value="0" label="Blocked"></lay-select-option>
-              <lay-select-option :value="1" label="Dishonest"></lay-select-option>
-              <lay-select-option :value="2" label="Normal"></lay-select-option>
-              <lay-select-option :value="3" label="Duty Staff"></lay-select-option>
-              <lay-select-option :value="4" label="Administrator"></lay-select-option>
+          <lay-form-item label="状态" prop="text">
+            <lay-select v-model="editUserInf.state" placeholder="请选择" style="width: 150px">
+              <lay-select-option :value="0" label="已停用"></lay-select-option>
+              <lay-select-option :value="1" label="参加活动受限"></lay-select-option>
+              <lay-select-option :value="2" label="正常"></lay-select-option>
+              <lay-select-option :value="3" label="工作人员"></lay-select-option>
+              <lay-select-option :value="4" label="管理员"></lay-select-option>
             </lay-select>
           </lay-form-item>
         </lay-col>
       </lay-row>
-      <lay-quote>Personal Information</lay-quote>
+      <lay-quote>个人信息</lay-quote>
       <lay-row space="4" style="margin-top: 10pt; width: 590px">
         <lay-col md="12">
-          <lay-form-item label="Name" prop="text" style="text-align: left" required>
+          <lay-form-item label="姓名" prop="text" style="text-align: left" required>
             <lay-input v-model="editUserInf.name" type="text" style="width: 200px"></lay-input>
           </lay-form-item>
         </lay-col>
         <lay-col md="12">
-          <lay-form-item label="Card ID" prop="text" style="text-align: left" required>
+          <lay-form-item label="会员卡号" prop="text" style="text-align: left" required>
             <lay-input v-model="editUserInf.card_id" type="text" style="width: 200px"></lay-input>
           </lay-form-item>
         </lay-col>
         <lay-col md="24">
-          <lay-form-item label="Student ID" prop="text" style="text-align: left;" label-width="104px" required>
+          <lay-form-item label="学号" prop="text" style="text-align: left;" label-width="104px" required>
             <lay-input v-model="editUserInf.student_id" type="text" style="width: 466px"></lay-input>
           </lay-form-item>
         </lay-col>
       </lay-row>
-      <lay-quote>Contact information</lay-quote>
+      <lay-quote>联系方式</lay-quote>
       <lay-row space="4" style="margin-top: 10pt; width: 590px">
         <lay-col md="12">
-          <lay-form-item label="Phone" prop="text" style="text-align: left" required>
+          <lay-form-item label="手机号" prop="text" style="text-align: left" required>
             <lay-input v-model="editUserInf.phone" type="text" style="width: 200px"></lay-input>
           </lay-form-item>
         </lay-col>
         <lay-col md="12">
-          <lay-form-item label="Wechat ID" prop="text" style="text-align: left" required>
+          <lay-form-item label="微信号" prop="text" style="text-align: left" required>
             <lay-input v-model="editUserInf.wechat_id" type="text" style="width: 200px"></lay-input>
           </lay-form-item>
         </lay-col>
         <lay-col md="24">
-          <lay-form-item label="Email" prop="text" style="text-align: left">
+          <lay-form-item label="邮箱" prop="text" style="text-align: left">
             <lay-input v-model="editUserInf.email" type="text" style="width: 496px"></lay-input>
           </lay-form-item>
         </lay-col>
       </lay-row>
       <div style="text-align: right; margin-top: -3px;">
-        <lay-button @click="this.editUserShow = false"><lay-icon type="layui-icon-close"/> Cancel</lay-button>
-        <lay-button type="primary" style="margin-right: 20px" @click="onEditSubmit" :disabled="disabled"><lay-icon type="layui-icon-release"/> Submit</lay-button>
+        <lay-button @click="this.editUserShow = false"><lay-icon type="layui-icon-close"/> 取消</lay-button>
+        <lay-button type="primary" style="margin-right: 20px" @click="onEditSubmit" :disabled="disabled"><lay-icon type="layui-icon-release"/> 提交</lay-button>
       </div>
     </lay-form>
   </lay-layer>
 
-  <lay-layer v-model="changePasswordShow" title="Password Setting" :area="['500px', '320px']" z-index="1000">
-    <lay-quote>Modify Password of Account “{{dataSource[currentIndex].username}}”</lay-quote>
+  <lay-layer v-model="changePasswordShow" title="修改密码" :area="['500px', '320px']" z-index="1000">
+    <lay-quote>修改账号“{{dataSource[currentIndex].username}}”的密码</lay-quote>
     <div style="padding: 20px;">
       <lay-form :model="changeInf" required>
-        <lay-form-item label="New Password" prop="password" label-width="130px">
+        <lay-form-item label="新密码" prop="password" label-width="130px">
           <lay-input v-model="changeInf.new_pass" type="password">></lay-input>
         </lay-form-item>
-        <lay-form-item label="Password Confirm" prop="password" label-width="130px">
+        <lay-form-item label="确认密码" prop="password" label-width="130px">
           <lay-input v-model="changeInf.cfm_pass" type="password">></lay-input>
         </lay-form-item>
         <div style="text-align: right">
-          <lay-button style="margin-top: 10px;" @click="this.changePasswordShow = false"><lay-icon type="layui-icon-close"/> Cancel</lay-button>
-          <lay-button type="primary" style="margin-top: 10px;" :disabled="disabled" @click="onPasswordSubmit"><lay-icon type="layui-icon-release"/> Submit</lay-button>
+          <lay-button style="margin-top: 10px;" @click="this.changePasswordShow = false"><lay-icon type="layui-icon-close"/> 取消</lay-button>
+          <lay-button type="primary" style="margin-top: 10px;" :disabled="disabled" @click="onPasswordSubmit"><lay-icon type="layui-icon-release"/> 提交</lay-button>
         </div>
       </lay-form>
     </div>
@@ -93,37 +93,37 @@
       <lay-row>
         <lay-col md="24">
           <lay-breadcrumb style="margin-left: 6pt">
-            <lay-breadcrumb-item title="Accounts"></lay-breadcrumb-item>
-            <lay-breadcrumb-item title="Management"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="账号"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="账号管理"></lay-breadcrumb-item>
           </lay-breadcrumb>
         </lay-col>
         <lay-col md="24" style="margin-top: 4pt">
-          <lay-input v-model="preQuery.name" size="sm" type="text" style="width: 120pt" placeholder="Name" prefix-icon="layui-icon-user"></lay-input>
-          <lay-input v-model="preQuery.student_id" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="Student ID" prefix-icon="layui-icon-read"></lay-input>
+          <lay-input v-model="preQuery.name" size="sm" type="text" style="width: 120pt" placeholder="姓名" prefix-icon="layui-icon-user"></lay-input>
+          <lay-input v-model="preQuery.student_id" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="学号" prefix-icon="layui-icon-read"></lay-input>
           <lay-dropdown updateAtScroll>
-            <lay-button :disabled="loading" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-cols" >User Status</lay-button>
+            <lay-button :disabled="loading" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-cols" >账号状态</lay-button>
             <template #content>
               <lay-dropdown-menu>
-                <lay-dropdown-menu-item @click="queryData(-1)"><span v-if="query.state===-1"><lay-icon type="layui-icon-ok"/></span> All Status</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(2)"><span v-if="query.state===2"><lay-icon type="layui-icon-ok"/></span> Normal</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(3)"><span v-if="query.state===3"><lay-icon type="layui-icon-ok"/></span> Duty Staffs</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(4)"><span v-if="query.state===4"><lay-icon type="layui-icon-ok"/></span> Administrators</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(1)"><span v-if="query.state===1"><lay-icon type="layui-icon-ok"/></span> Dishonest</lay-dropdown-menu-item>
-                <lay-dropdown-menu-item @click="queryData(0)"><span v-if="query.state===0"><lay-icon type="layui-icon-ok"/></span> Blocked</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(-1)"><span v-if="query.state===-1"><lay-icon type="layui-icon-ok"/></span> 全部状态</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(2)"><span v-if="query.state===2"><lay-icon type="layui-icon-ok"/></span> 正常</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(3)"><span v-if="query.state===3"><lay-icon type="layui-icon-ok"/></span> 工作人员</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(4)"><span v-if="query.state===4"><lay-icon type="layui-icon-ok"/></span> 管理员</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(1)"><span v-if="query.state===1"><lay-icon type="layui-icon-ok"/></span> 参加活动受限</lay-dropdown-menu-item>
+                <lay-dropdown-menu-item @click="queryData(0)"><span v-if="query.state===0"><lay-icon type="layui-icon-ok"/></span> 已停用</lay-dropdown-menu-item>
               </lay-dropdown-menu>
             </template>
           </lay-dropdown>
-          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-2)" :disabled="loading">Query</lay-button>
+          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-2)" :disabled="loading">查询</lay-button>
         </lay-col>
       </lay-row>
     </template>
     <template #empty>
-      <lay-empty description="No Records"></lay-empty>
+      <lay-empty description="暂无记录"></lay-empty>
     </template>
     <template v-slot:operator="{ rowIndex }">
-      <lay-button size="xs" type="normal" :disabled="this.loading" @click="onEditShow(rowIndex)"><lay-icon type="layui-icon-tabs"/> Edit</lay-button>
-      <lay-button size="xs" type="warm" :disabled="this.loading" @click="onPasswordShow(rowIndex)"><lay-icon type="layui-icon-password"/> Modify Password</lay-button>
-      <lay-button size="xs" type="danger" :disabled="this.loading" @click="onDeleteSubmit(rowIndex)"><lay-icon type="layui-icon-delete"/> Delete</lay-button>
+      <lay-button size="xs" type="normal" :disabled="this.loading" @click="onEditShow(rowIndex)"><lay-icon type="layui-icon-tabs"/> 编辑</lay-button>
+      <lay-button size="xs" type="warm" :disabled="this.loading" @click="onPasswordShow(rowIndex)"><lay-icon type="layui-icon-password"/> 修改密码</lay-button>
+      <lay-button size="xs" type="danger" :disabled="this.loading" @click="onDeleteSubmit(rowIndex)"><lay-icon type="layui-icon-delete"/> 删除</lay-button>
     </template>
   </lay-table>
 </template>
@@ -169,14 +169,14 @@ export default {
         total: 0
       },
       columns:[
-        { title:"Username", width:"160px", resize:true, key:"username"},
-        { title:"Name", width:"160px", resize:true, key:"name" },
-        { title:"Student ID", width:"200px", resize:true, key:"student_id" },
-        { title:"Card ID", width:"160px", resize:true, key:"card_id" },
-        { title:"Wechat ID", width:"160px", resize:true, key:"wechat_id"},
-        { title:"Phone", width:"160px", resize:true, key:"phone" },
-        { title:"Status", width:"160px", resize:true, key:"status_name" },
-        { title:"Operation" , width: "260px" , fixed: "right", customSlot:"operator", key:"operator", ignoreExport: true }
+        { title:"用户名", width:"160px", resize:true, key:"username"},
+        { title:"姓名", width:"160px", resize:true, key:"name" },
+        { title:"学号", width:"200px", resize:true, key:"student_id" },
+        { title:"会员卡号", width:"160px", resize:true, key:"card_id" },
+        { title:"微信号", width:"160px", resize:true, key:"wechat_id"},
+        { title:"手机号", width:"160px", resize:true, key:"phone" },
+        { title:"状态", width:"160px", resize:true, key:"status_name" },
+        { title:"操作" , width: "260px" , fixed: "right", customSlot:"operator", key:"operator", ignoreExport: true }
       ],
       dataSource:[],
       editUserInf:{
@@ -221,7 +221,7 @@ export default {
       })
           .then(res => {
             if(res.status !== 200){
-              layer.msg('System Error', {icon: 2, time: 1500});
+              layer.msg('系统异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
               return;
             }
@@ -241,7 +241,7 @@ export default {
             this.loading = false;
           })
           .catch(error => {
-            layer.msg('Internet Error！', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.loading = false;
           })
     },
@@ -249,15 +249,15 @@ export default {
       obj.status_name = '';
       switch(obj.state){
         case 0:
-          obj.status_name = 'Blocked'; break;
+          obj.status_name = '已停用'; break;
         case 1:
-          obj.status_name = 'Dishonest'; break;
+          obj.status_name = '参加活动受限'; break;
         case 2:
-          obj.status_name = 'Normal'; break;
+          obj.status_name = '正常'; break;
         case 3:
-          obj.status_name = 'Duty Stuff'; break;
+          obj.status_name = '工作人员'; break;
         case 4:
-          obj.status_name = 'Administrator';
+          obj.status_name = '管理员';
       }
     },
     onEditShow(id){
@@ -278,22 +278,22 @@ export default {
         return;
       }
       if(this.editUserInf.state === 3 && this.dataSource[this.currentIndex].state !== 3){
-        layer.confirm("If switching the current user to the Duty Stuff type empties his/her participation record, is it confirmed?",
+        layer.confirm("将账号改为工作人员会清空其报名记录，确定继续吗？",
             {
               btn: [
                 {
-                  text:'Confirm', callback: (id) => {
+                  text:'确认', callback: (id) => {
                     layer.close(id);
                     this.onConfirmUpdateUser();
                   }
                 }, {
-                  text:'Cancel', callback: (id) => {
+                  text:'取消', callback: (id) => {
                     layer.close(id);
                   }
                 }
               ],
               icon: 7,
-              title: "Alarm"
+              title: "请确认"
             }
         );
       }
@@ -317,52 +317,52 @@ export default {
               }
               if(res.data.status === -1){
                 this.disabled = false;
-                layer.msg('It is not allowed to modify the administrator privileges of the currently logged-in account.',{icon: 7, time: 1500});
+                layer.msg('不能修改当前登录管理员的权限。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 0){
                 this.disabled = false;
-                layer.msg('The username of the currently modified account is duplicated with that of another account.',{icon: 7, time: 1500});
+                layer.msg('用户名已被其他账号使用。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 1){
                 this.disabled = false;
                 this.editUserShow = false;
-                layer.msg('The current account has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                layer.msg('该账号已删除，请刷新页面后重试。',{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 2){
                 this.disabled = false;
                 this.editUserShow = false;
-                layer.msg('The current account is a Duty Stuff and is still scheduled, please assign another Duty Stuff to it or wait until it is finished before changing it!',{icon: 7, time: 1500});
+                layer.msg('该工作人员仍有排班，请先重新分配或等待活动结束。',{icon: 7, time: 1500});
                 return;
               }
               this.dataSource[this.currentIndex] = JSON.parse(JSON.stringify(this.editUserInf));
               this.computedStatusName(this.dataSource[this.currentIndex]);
               this.disabled = false;
               this.editUserShow = false;
-              layer.msg('Update Successfully',{icon: 1, time: 1500});
+              layer.msg('更新成功',{icon: 1, time: 1500});
             }else{
-              layer.msg('System Error',{icon: 1, time: 1500});
+              layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
             }
           })
           .catch(res => {
-            layer.msg('Internet Error', {icon: 2, time: 1500})
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
           });
     },
     onPasswordSubmit(){
       if(this.changeInf.new_pass === '' || this.changeInf.cfm_pass === ''){
-        layer.msg('The modified password cannot be empty.', {icon: 7, time: 1500});
+        layer.msg('新密码不能为空。', {icon: 7, time: 1500});
         return;
       }
       if(this.changeInf.new_pass !== this.changeInf.cfm_pass){
-        layer.msg('The password entered twice is not the same.', {icon: 7, time: 1500});
+        layer.msg('两次输入的密码不一致。', {icon: 7, time: 1500});
         return;
       }
       const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[$@$!%*?&])[A-Za-z\d$@$!%*?&]{8,}/;
       if(pattern.test(this.changeInf.new_pass) === false){
         this.disabled = false;
-        layer.msg("The currently set password does not meet the rules: The password must be at least 8 characters long and contain uppercase and lowercase letters, numbers, and special symbols"
+        layer.msg("密码至少 8 位，且须包含大小写字母、数字和特殊符号"
             , {icon:7, time: 1500});
         return;
       }
@@ -376,35 +376,35 @@ export default {
               if(res.data.status === -1){
                 this.disabled = false;
                 this.changePasswordShow = false;
-                layer.msg('To change the password of current registered user, please go to \'Password Setting\' in the upper right corner to change the password.'
+                layer.msg('请在右上角的“密码设置”中修改当前账号的密码。'
                     ,{icon: 7, time: 1500});
                 return;
               }
               if(res.data.status === 0){
                 this.disabled = false;
                 this.changePasswordShow = false;
-                layer.msg('The current account has been deleted, please refresh the page and try again.'
+                layer.msg('该账号已删除，请刷新页面后重试。'
                     ,{icon: 7, time: 1500});
                 return;
               }
               this.disabled = false;
               this.changePasswordShow = false;
-              layer.msg('Password modified successfully',{icon: 1, time: 1500});
+              layer.msg('密码修改成功',{icon: 1, time: 1500});
             }else{
-              layer.msg('System Error',{icon: 1, time: 1500});
+              layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
             }
           })
           .catch(res => {
-            layer.msg('Internet Error', {icon: 2, time: 1500})
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
           })
     },
     onDeleteSubmit(index){
-      layer.confirm(`Are you confirming the deletion of the account “${this.dataSource[index].username}”, which will cause the data to be unrecoverable?`,
+      layer.confirm(`确定删除账号“${this.dataSource[index].username}”吗？账号数据无法恢复。`,
           {
-            title:"Query",
+            title:"确认删除",
             icon: 3,
             btn: [
-              {text:'Confirm', callback: (id) => {
+              {text:'确认删除', callback: (id) => {
                   layer.close(id);
                   this.$http.post(`/member/deleteUser?token=${Cookies.get('token')}&user_id=${this.dataSource[index].id}`)
                       .then(res => {
@@ -416,41 +416,41 @@ export default {
                           if(res.data.status === -1){
                             this.disabled = false;
                             this.changePasswordShow = false;
-                            layer.msg('Deletion of currently signed up accounts is not allowed.',{icon: 7, time: 1500});
+                            layer.msg('不能删除当前登录的账号。',{icon: 7, time: 1500});
                             return;
                           }
                           if(res.data.status === 0){
                             this.disabled = false;
                             this.changePasswordShow = false;
-                            layer.msg('The current account has been deleted, please refresh the page and try again.',{icon: 7, time: 1500});
+                            layer.msg('该账号已删除，请刷新页面后重试。',{icon: 7, time: 1500});
                             return;
                           }
                           if(res.data.status === 1){
                             this.disabled = false;
                             this.editUserShow = false;
-                            layer.msg('The current account is a Duty Stuff and is still scheduled, please assign it to another Duty Stuff or wait until it is finished before deleting it!',{icon: 7, time: 1500});
+                            layer.msg('该工作人员仍有排班，请先重新分配或等待活动结束后再删除。',{icon: 7, time: 1500});
                             return;
                           }
                           this.dataSource[this.currentIndex] = JSON.parse(JSON.stringify(this.editUserInf));
                           this.computedStatusName(this.dataSource[this.currentIndex]);
                           this.disabled = false;
                           this.changePasswordShow = false;
-                          layer.msg('Delete Successful',{icon: 1, time: 1500});
+                          layer.msg('删除成功',{icon: 1, time: 1500});
                           if(this.dataSource.length === 1 && this.page.current > 1){
                             this.page.current = this.page.current - 1;
                           }
                           this.queryData();
                         }else{
-                          layer.msg('System Error',{icon: 1, time: 1500});
+                          layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
                         }
                       })
                       .catch(res => {
-                        layer.msg('Internet Error', {icon: 2, time: 1500})
+                        layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500})
                       })
 
                 }
               },
-              {text:'Cancel', callback: (id) => {
+              {text:'取消', callback: (id) => {
                   layer.close(id);
               }
               }

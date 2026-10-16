@@ -1,8 +1,8 @@
 <template>
-  <lay-exception status="404" title="404" describe="Page Not Found" style="margin-top: 30vh">
+  <lay-exception status="404" title="404" describe="页面不存在" style="margin-top: 30vh">
     <template #extra>
-      <lay-button @click="onBackClick">Back</lay-button>
-      <lay-button type="primary" @click="onInboxClick">Go to Inbox</lay-button>
+      <lay-button @click="onBackClick">返回</lay-button>
+      <lay-button type="primary" @click="onInboxClick">返回首页</lay-button>
     </template>
   </lay-exception>
 </template>

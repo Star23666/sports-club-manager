@@ -5,8 +5,8 @@
     <QrScanner v-if="showQrCodeReader" @decode="onDecodeHandler" @close="qrReaderClose" />
   </div>
   <van-nav-bar
-      title="Verify & Sign"
-      left-text="Back"
+      title="签到核验"
+      left-text="返回"
       left-arrow
       fixed
       @click-left="onClickLeft"
@@ -14,18 +14,18 @@
   />
 
   <van-cell-group v-if="!sign_code" inset class="scan-entry">
-    <van-cell title="Check a member in" label="Scan their QR code or enter the code shown below it." />
+    <van-cell title="为会员签到" label="可扫描二维码；本机没有摄像头时，输入二维码下方的签到码。" />
     <van-field
         v-model.trim="manualCode"
-        label="Sign-in code"
-        placeholder="Enter the member's sign-in code"
+        label="签到码"
+        placeholder="输入会员的签到码"
         maxlength="100"
         clearable
         @keyup.enter="submitManualCode"
     />
     <div class="scan-entry-actions">
-      <van-button icon="scan" plain type="primary" @click="startScan">Scan QR code</van-button>
-      <van-button type="primary" @click="submitManualCode">Look up code</van-button>
+      <van-button icon="scan" plain type="primary" @click="startScan">扫码（需摄像头）</van-button>
+      <van-button type="primary" @click="submitManualCode">查询签到码</van-button>
     </div>
   </van-cell-group>
 
@@ -39,15 +39,15 @@
         :show-indicators="false"
         ref="swipe"
     >
-      <van-swipe-item>{{ notice_messgae }}, this result is only used to verify the validity of this records!</van-swipe-item>
-      <van-swipe-item v-if="!this.show_sign && !this.signed">If there are special circumstances that prevent you from signing in, you can send this screenshot to an administrator to complete the Re-Sign operation!</van-swipe-item>
+      <van-swipe-item>{{ notice_messgae }}。此结果仅用于核验记录。</van-swipe-item>
+      <van-swipe-item v-if="!this.show_sign && !this.signed">如有特殊情况无法签到，可将此页面截图交给管理员处理补签。</van-swipe-item>
     </van-swipe>
   </van-notice-bar>
 
   <br v-if="sign_code && !show_sign && !isLoading"/>
   <br v-if="sign_code && !show_sign && !isLoading"/>
   <div v-if="sign_code && isLoading">
-    <van-empty image="search" description="Loading..." />
+    <van-empty image="search" description="查询中..." />
   </div>
   <br/>
   <div v-if="sign_code && !isLoading">
@@ -61,29 +61,29 @@
       <van-row justify="center" style="margin: 0px 0px 20px 0px; font-size: 8pt; font-weight: bold; color: gray">
         {{sign_code}}
       </van-row>
-      <van-cell title="Location">{{actionInf.place}}</van-cell>
-      <van-cell title="Date">{{actionInf.date}}</van-cell>
-      <van-cell title="Time">{{actionInf.time_range}}</van-cell>
-      <van-cell title="Racket">{{borrow ? 'Need' : 'No Need'}}</van-cell>
-      <van-cell title="Status" v-if="!this.show_sign">{{signed ? 'Signed' : 'Unsigned'}}</van-cell>
+      <van-cell title="地点">{{actionInf.place}}</van-cell>
+      <van-cell title="日期">{{actionInf.date}}</van-cell>
+      <van-cell title="时间">{{actionInf.time_range}}</van-cell>
+      <van-cell title="球拍">{{borrow ? '需要借用' : '无需借用'}}</van-cell>
+      <van-cell title="签到状态" v-if="!this.show_sign">{{signed ? '已签到' : '未签到'}}</van-cell>
       <van-cell v-if="!this.show_sign && !this.signed"></van-cell>
     </van-cell-group>
     <br/>
     <van-cell-group inset>
-      <van-cell title="Participant Information"/>
-      <van-cell title="Name">{{memInf.name}}</van-cell>
-      <van-cell title="Student ID">{{memInf.student_id}}</van-cell>
-      <van-cell title="Phone">{{memInf.phone}}</van-cell>
-      <van-cell title="Email" v-if="memInf.email !== ''">{{memInf.email}}</van-cell>
-      <van-cell title="Wechat ID">{{memInf.wechat_id}}</van-cell>
+      <van-cell title="参加者信息"/>
+      <van-cell title="姓名">{{memInf.name}}</van-cell>
+      <van-cell title="学号">{{memInf.student_id}}</van-cell>
+      <van-cell title="手机号">{{memInf.phone}}</van-cell>
+      <van-cell title="邮箱" v-if="memInf.email !== ''">{{memInf.email}}</van-cell>
+      <van-cell title="微信号">{{memInf.wechat_id}}</van-cell>
     </van-cell-group>
     <van-submit-bar
         v-if="show_sign"
-        tip="Please check the information carefully to make sure it is correct, and then finish signing in!"
+        tip="请仔细核对参加者信息，确认无误后完成签到。"
         tip-icon="info-o"
         placeholder>
       <template #button>
-        <van-button icon="sign" round type="warning" @click="onSignClick">Sign</van-button>
+        <van-button icon="sign" round type="warning" @click="onSignClick">确认签到</van-button>
       </template>
     </van-submit-bar>
   </div>
@@ -105,22 +105,22 @@ export default {
       manualCode: '',
       notice_messgae: '',
       memInf: {
-        name: 'loading...',
-        username: 'loading...',
-        student_id: 'loading...',
-        phone: 'loading...',
-        email: 'loading...',
-        wechat_id: 'loading...',
+        name: '加载中...',
+        username: '加载中...',
+        student_id: '加载中...',
+        phone: '加载中...',
+        email: '加载中...',
+        wechat_id: '加载中...',
         state: 3
       },
       borrow: false,
       signed: false,
       loading: false,
       actionInf: {
-        title: 'loading...',
-        place:'loading...',
-        date: 'loading...',
-        time_range: 'loading...'
+        title: '加载中...',
+        place:'加载中...',
+        date: '加载中...',
+        time_range: '加载中...'
       },
       show_sign: false
     };
@@ -138,7 +138,7 @@ export default {
     },
     submitManualCode(){
       if (!this.manualCode) {
-        showFailToast("Enter a sign-in code first.");
+        showFailToast("请先输入签到码");
         return;
       }
       this.onDecodeHandler(this.manualCode);
@@ -154,7 +154,7 @@ export default {
       this.sign_code = String(data || '').trim();
       this.showQrCodeReader = false;
       if (!this.sign_code) {
-        showFailToast("Enter a sign-in code first.");
+        showFailToast("请先输入签到码");
         return;
       }
       this.isLoading = true;
@@ -162,7 +162,7 @@ export default {
           .then(response => {
             if(response.status !== 200){
               this.resetLookup();
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
               return;
             }
             if(response.data.status < 0) {
@@ -171,12 +171,12 @@ export default {
             }
             if(response.data.status === 0){
               this.resetLookup();
-              showFailToast("The current QR code information is invalid");
+              showFailToast("签到码无效");
               return;
             }
             if(response.data.status === 2){
               this.resetLookup();
-              showFailToast("You are not responsible for this action");
+              showFailToast("你不是该活动的负责工作人员");
               return;
             }
             else{
@@ -185,35 +185,35 @@ export default {
               this.borrow = response.data.data.borrow;
               this.signed = response.data.data.signed;
               if(response.data.status === 1){
-                this.notice_messgae = "The current code has been signed";
+                this.notice_messgae = "该记录已签到";
                 showDialog({
-                  message: 'The current QR code has been signed, this result is only used to verify the validity of this records',
-                  confirmButtonText: 'Ok'
+                  message: '该记录已签到，此结果仅用于核验记录。',
+                  confirmButtonText: '知道了'
                 }).then(() => {
                   // on close
                 });
               }
               if(response.data.status === 3){
-                this.notice_messgae = "The action it belongs to is not enabled for check-in, so you cannot check-in for it.";
+                this.notice_messgae = "活动尚未开放签到";
                 showDialog({
-                  message: 'The action it belongs to is not enabled for check-in, so you cannot sign for it. this result is only used to verify the validity of this records!',
-                  confirmButtonText: 'Ok'
+                  message: '该活动尚未开放签到，此结果仅用于核验记录。',
+                  confirmButtonText: '知道了'
                 }).then(() => {
                   // on close
                 });
               }
               if(response.data.status === 4){
-                this.notice_messgae = "The action for which the current record belongs has been completed and cannot be signed for";
+                this.notice_messgae = "活动已结束，不能签到";
                 showDialog({
-                  message: 'The action for which the current record belongs has been completed and cannot be signed for, this result is only used to verify the validity of this records!',
-                  confirmButtonText: 'Ok'
+                  message: '该活动已结束，不能签到；此结果仅用于核验记录。',
+                  confirmButtonText: '知道了'
                 }).then(() => {
                   // on close
                 });
               }
               if(response.data.status === 5){
                 this.show_sign = true;
-                showToast("Please check the information carefully and make sure it is correct before signing in!");
+                showToast("请核对参加者信息后再签到");
               }
               this.isLoading = false;
             }
@@ -221,7 +221,7 @@ export default {
           .catch(error =>{
             console.log(error);
             this.resetLookup();
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
           });
     },
     onClickLeft(){
@@ -234,40 +234,40 @@ export default {
             this.loading = false;
             if(response.status !== 200){
               this.$router.push({path:'/staff'});
-              showFailToast("System Error");
+              showFailToast("系统异常，请稍后重试");
             }
             if(response.data.status < 0)
               this.$staffVerify();
             if(response.data.status === 0){
               this.$router.push({path:'/staff'});
-              showFailToast("Information Inviled");
+              showFailToast("签到信息无效");
             }
             if(response.data.status === 1){
               this.$router.push({path:'/staff'});
-              showFailToast("The current code has been signed.");
+              showFailToast("该记录已签到");
             }
             if(response.data.status === 2){
               this.$router.push({path:'/staff'});
-              showFailToast("The current code does not belong to this action.");
+              showFailToast("该记录不属于你负责的活动");
             }
             if(response.data.status === 3){
               this.$router.push({path:'/staff'});
-              showFailToast("The current action is not open for signing in.");
+              showFailToast("活动尚未开放签到");
             }
             if(response.data.status === 4){
               this.$router.push({path:'/staff'});
-              showFailToast("The current action has ended and you cannot sign in.");
+              showFailToast("活动已结束，不能签到");
             }
             if(response.data.status === 5){
               this.$router.push({path:'/staff'});
-              showSuccessToast("Sign Successfully");
+              showSuccessToast("签到成功");
             }
           })
           .catch(error => {
             this.loading = false;
             console.log(error);
             this.$router.push({path:'/staff'});
-            showFailToast("Internet Error");
+            showFailToast("网络异常，请稍后重试");
           });
     }
   }

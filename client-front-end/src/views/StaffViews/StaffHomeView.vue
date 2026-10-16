@@ -1,14 +1,14 @@
 <template>
-  <van-nav-bar title="Staff Duty System" fixed/>
+  <van-nav-bar title="工作人员值班" fixed/>
   <br/><br/><br/>
   <div style="margin: 0px 10px 0px 10px;">
     <router-view>
     </router-view>
   </div>
   <van-tabbar v-model="active" @change="onChange" fixed>
-    <van-tabbar-item icon="calendar-o">Duty Roster</van-tabbar-item>
-    <van-tabbar-item icon="scan">Verify & Sign</van-tabbar-item>
-    <van-tabbar-item icon="user-circle-o">Account</van-tabbar-item>
+    <van-tabbar-item icon="calendar-o">值班安排</van-tabbar-item>
+    <van-tabbar-item icon="scan">签到核验</van-tabbar-item>
+    <van-tabbar-item icon="user-circle-o">账号</van-tabbar-item>
   </van-tabbar>
 </template>
 

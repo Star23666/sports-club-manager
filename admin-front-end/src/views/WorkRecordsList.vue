@@ -11,19 +11,19 @@
       <lay-row>
         <lay-col md="24">
           <lay-breadcrumb style="margin-left: 6pt">
-            <lay-breadcrumb-item title="Records"></lay-breadcrumb-item>
-            <lay-breadcrumb-item title="Duties"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="记录"></lay-breadcrumb-item>
+            <lay-breadcrumb-item title="值班"></lay-breadcrumb-item>
           </lay-breadcrumb>
         </lay-col>
         <lay-col md="24" style="margin-top: 4pt">
-          <lay-input v-model="preQuery.name" size="sm" type="text" style="width: 120pt" placeholder="Stuff Name" prefix-icon="layui-icon-user"></lay-input>
-          <lay-input v-model="preQuery.student_id" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="Action Name" prefix-icon="layui-icon-flag"></lay-input>
-          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-1)" :disabled="loading">Query</lay-button>
+          <lay-input v-model="preQuery.name" size="sm" type="text" style="width: 120pt" placeholder="值班人员姓名" prefix-icon="layui-icon-user"></lay-input>
+          <lay-input v-model="preQuery.student_id" size="sm" type="text" style="width: 180pt; margin-left: 10pt" placeholder="活动名称" prefix-icon="layui-icon-flag"></lay-input>
+          <lay-button type="primary" size="sm" style="margin-left: 10pt" prefix-icon="layui-icon-search" @click="queryData(-1)" :disabled="loading">查询</lay-button>
         </lay-col>
       </lay-row>
     </template>
     <template #empty>
-      <lay-empty description="No Records"></lay-empty>
+      <lay-empty description="暂无记录"></lay-empty>
     </template>
   </lay-table>
 </template>
@@ -67,14 +67,14 @@ export default {
         total: 0
       },
       columns:[
-        { title:"Stuff Name", width:"120px", resize:true, key:"staff_name" },
-        { title:"Stuff Username", width:"120px", resize:true, key:"staff_username" },
-        { title:"Action Name", width:"220px", resize:true, key:"action_title"},
+        { title:"值班人员姓名", width:"120px", resize:true, key:"staff_name" },
+        { title:"值班人员用户名", width:"120px", resize:true, key:"staff_username" },
+        { title:"活动名称", width:"220px", resize:true, key:"action_title"},
         { title:"No. of Rackets", width:"100px", resize:true, key:"borrow_num" },
-        { title:"Location", width:"160px", resize:true, key:"action_place" },
-        { title:"Date", width:"160px", resize:true, key:"action_date"},
-        { title:"Time", width:"160px", resize:true, key:"action_time_range"},
-        { title:"Action Status", width:"160px", resize:true, key:"action_state_name" },],
+        { title:"地点", width:"160px", resize:true, key:"action_place" },
+        { title:"日期", width:"160px", resize:true, key:"action_date"},
+        { title:"时间", width:"160px", resize:true, key:"action_time_range"},
+        { title:"活动状态", width:"160px", resize:true, key:"action_state_name" },],
       dataSource:[],
       disabled: false,
       currentIndex: -1
@@ -95,7 +95,7 @@ export default {
 &title=${encodeURIComponent(this.query.student_id)}&page_size=${this.page.limit}&page_number=${this.page.current}`)
           .then(res => {
             if(res.status !== 200){
-              layer.msg('System Error', {icon: 2, time: 1500});
+              layer.msg('系统异常，请稍后重试', {icon: 2, time: 1500});
               this.loading = false;
               return;
             }
@@ -115,7 +115,7 @@ export default {
             this.loading = false;
           })
           .catch(error => {
-            layer.msg('Internet Error!', {icon: 2, time: 1500});
+            layer.msg('网络异常，请稍后重试', {icon: 2, time: 1500});
             this.loading = false;
           })
     },
@@ -123,15 +123,15 @@ export default {
       obj.status_name = '';
       switch(obj.action_state){
         case 1:
-          obj.action_state_name = 'In Preparation'; break;
+          obj.action_state_name = '筹备中'; break;
         case 2:
-          obj.action_state_name = 'In Participating'; break;
+          obj.action_state_name = '报名中'; break;
         case 3:
-          obj.action_state_name = 'Entry Closed'; break;
+          obj.action_state_name = '报名已截止'; break;
         case 4:
-          obj.action_state_name = 'In Process'; break;
+          obj.action_state_name = '进行中'; break;
         case 5:
-          obj.action_state_name = 'Terminated'; break;
+          obj.action_state_name = '已结束'; break;
       }
 
     }
