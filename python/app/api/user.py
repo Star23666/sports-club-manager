@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query, Request
 
 from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_all, fetch_one, sql_binary, tx
 from ..passwords import hash_password, verify_user_password
+from ..rate_limit import clear_login_account_attempts, reserve_login_request
 from ..response import vo
 from ..utils import PASSWORD_PATTERN, encrypt_md5, mask_equip_id, new_token
 from .common import token_verify_member
@@ -16,13 +17,17 @@ router = APIRouter(prefix="/api/user", tags=["user"])
 
 
 @router.post("/login")
-def login(username: str = Body("", embed=True), password: str = Body("", embed=True)):
+def login(request: Request, username: str = Body("", embed=True), password: str = Body("", embed=True)):
+    if not reserve_login_request(request, username):
+        return vo(-3, "Too many login attempts")
     with tx() as conn:
         user = fetch_one(conn, f"select * from users where {sql_binary('username')}=:username", {"username": username})
         if not user:
             return vo(-2)
         if not verify_user_password(conn, user, password):
             return vo(-2)
+
+        clear_login_account_attempts(conn, username)
 
         state = int(user.get("state") or 0)
         token_value: str | None = None

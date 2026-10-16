@@ -99,6 +99,17 @@ SCHEMA_DDL = [
     CREATE INDEX IF NOT EXISTS recovery_rate_limit_window_idx
     ON recovery_rate_limit(window_start)
     """,
+    """
+    CREATE TABLE IF NOT EXISTS login_rate_limit (
+        bucket_key TEXT PRIMARY KEY,
+        window_start INTEGER NOT NULL,
+        hits INTEGER NOT NULL
+    )
+    """,
+    """
+    CREATE INDEX IF NOT EXISTS login_rate_limit_window_idx
+    ON login_rate_limit(window_start)
+    """,
 
     # ── Views (drop + recreate) ─────────────────────────────
     """

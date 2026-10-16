@@ -27,7 +27,7 @@ def test_every_other_api_route_requires_authorization_header():
 
 
 @contextmanager
-def _fake_tx():
+def _fake_tx(**_kwargs):
     yield object()
 
 
@@ -83,7 +83,11 @@ def test_member_cannot_read_or_mutate_another_members_resources(
 ):
     monkeypatch.setattr(module, "tx", _fake_tx)
     monkeypatch.setattr(module, "token_verify_member", lambda *_: (1, {"id": 7, "state": 2}))
-    row_iter = iter(rows)
+    if path in {"/api/action/cancelAction", "/api/waiting/waitDelete"}:
+        monkeypatch.setattr(module, "lock_action", lambda *_args: {"id": 20, "state": 2})
+        row_iter = iter([rows[0], rows[0]])
+    else:
+        row_iter = iter(rows)
     monkeypatch.setattr(module, "fetch_one", lambda *_args, **_kwargs: next(row_iter))
     monkeypatch.setattr(
         module, "exec_one", lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("unauthorized write"))

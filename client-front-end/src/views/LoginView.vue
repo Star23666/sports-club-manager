@@ -108,6 +108,10 @@ export default {
           showFailToast('用户名或密码错误');
           return;
         }
+        if(response.data.status === -3){
+          showFailToast('登录尝试过多，请稍后再试');
+          return;
+        }
         if(response.data.status === -1){
           showFailToast('账号仍在审核中');
           return;

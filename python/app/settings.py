@@ -36,6 +36,9 @@ class Settings(BaseSettings):
         default="http://localhost:8080,http://localhost:8082,http://127.0.0.1:8080,http://127.0.0.1:8082",
         validation_alias="CORS_ORIGINS",
     )
+    login_account_limit: int = Field(default=8, ge=1, validation_alias="LOGIN_ACCOUNT_LIMIT")
+    login_ip_limit: int = Field(default=120, ge=1, validation_alias="LOGIN_IP_LIMIT")
+    login_window_seconds: int = Field(default=900, ge=1, validation_alias="LOGIN_WINDOW_SECONDS")
 
     @property
     def allowed_origins(self) -> list[str]:

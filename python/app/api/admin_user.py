@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query, Request
 
 from .auth_transport import bearer_token
 
 from ..db import exec_one, fetch_one, tx
 from ..response import vo
 from ..passwords import hash_password, verify_user_password
+from ..rate_limit import clear_login_account_attempts, reserve_login_request
 from ..utils import PASSWORD_PATTERN
 from .common import login_common, token_verify_admin
 
@@ -14,9 +15,13 @@ router = APIRouter(prefix="/admin/api/user", tags=["admin-user"])
 
 
 @router.post("/login")
-def admin_login(username: str = Body("", embed=True), password: str = Body("", embed=True)):
+def admin_login(request: Request, username: str = Body("", embed=True), password: str = Body("", embed=True)):
+    if not reserve_login_request(request, username):
+        return vo(-3, "Too many login attempts")
     with tx() as conn:
         status, token_value = login_common(conn, username, password, admin=True)
+        if status == 0:
+            clear_login_account_attempts(conn, username)
         return vo(status, token_value if status == 0 else None)
 
 

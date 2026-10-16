@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 
 from .auth_transport import bearer_token
 
-from ..db import exec_one, fetch_all, fetch_one, tx
+from ..db import exec_one, fetch_all, fetch_one, lock_action, tx
 from ..response import vo
 from .common import token_verify_member
 
@@ -80,7 +80,7 @@ def query_wechat_group(token: str = Depends(bearer_token), record_id: int = Quer
 
 @router.post("/attendAction")
 def attend_action(token: str = Depends(bearer_token), action_id: int = Query(...), borrow: bool = Query(False)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Incorrect")
@@ -88,25 +88,29 @@ def attend_action(token: str = Depends(bearer_token), action_id: int = Query(...
         if int(user.get("state") or 0) != 2:
             return vo(-1, "Identify Incorrect")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": action_id})
+        action = lock_action(conn, action_id)
         if not action or int(action.get("state") or 0) != 2:
             return vo(0, "No action")
 
-        in_action = fetch_one(
+        in_action = fetch_all(
             conn,
-            "select count(*) as c from records where user_id=:uid and action_id=:aid",
+            "select ID from records where user_id=:uid and action_id=:aid",
             {"uid": user["id"], "aid": action_id},
+            for_update=True,
         )
-        in_waiting = fetch_one(
+        in_waiting = fetch_all(
             conn,
-            "select count(*) as c from waiting where user_id=:uid and action_id=:aid",
+            "select ID from waiting where user_id=:uid and action_id=:aid",
             {"uid": user["id"], "aid": action_id},
+            for_update=True,
         )
-        if (in_action and int(in_action["c"]) > 0) or (in_waiting and int(in_waiting["c"]) != 0):
+        if in_action or in_waiting:
             return vo(1, "Repeated")
 
-        now_count = fetch_one(conn, "select count(*) as c from records where action_id=:aid", {"aid": action_id})
-        if now_count and int(now_count["c"]) == int(action.get("max_num") or 0):
+        now_count = len(fetch_all(
+            conn, "select ID from records where action_id=:aid", {"aid": action_id}, for_update=True,
+        ))
+        if now_count >= int(action.get("max_num") or 0):
             return vo(2, "Full")
 
         sign_code = str(uuid.uuid4())
@@ -123,43 +127,48 @@ def attend_action(token: str = Depends(bearer_token), action_id: int = Query(...
 
 @router.post("/cancelAction")
 def cancel_action(token: str = Depends(bearer_token), record_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:
             return vo(-2, "Login Incorrect")
 
-        record = fetch_one(conn, "select * from records where ID=:id", {"id": record_id})
-        if not record:
+        record_ref = fetch_one(conn, "select action_id from records where ID=:id", {"id": record_id})
+        if not record_ref:
             return vo(-1, "No Record")
 
-        action = fetch_one(conn, "select * from actions where ID=:id", {"id": record["action_id"]})
+        action = lock_action(conn, record_ref["action_id"])
+        record = fetch_one(conn, "select * from records where ID=:id", {"id": record_id}, for_update=True)
+        if not record:
+            return vo(-1, "No Record")
         if action and int(action.get("state") or 0) > 2:
             return vo(0, "Can not Cancel!")
 
         if int(record.get("user_id") or 0) != int(user["id"]):
             return vo(1, "User Not Match")
 
-        waiting_count = fetch_one(conn, "select count(*) as c from waiting where action_id=:aid", {"aid": record["action_id"]})
-        if waiting_count and int(waiting_count["c"]) > 0:
-            wait = fetch_one(conn, "select * from waiting where action_id=:aid and `rank`=1", {"aid": record["action_id"]})
-            if wait:
-                new_code = str(uuid.uuid4())
-                exec_one(
-                    conn,
-                    "update records set sign_code=:code, user_id=:uid, borrow=:borrow where ID=:rid",
-                    {"code": new_code, "uid": wait["user_id"], "borrow": int(wait["borrow"]), "rid": record_id},
-                )
-                exec_one(
-                    conn,
-                    "update waiting set `rank` = `rank`-1 where action_id=:aid and `rank`>=:con_rank",
-                    {"aid": record["action_id"], "con_rank": 1},
-                )
-                exec_one(conn, "delete from waiting where ID=:id", {"id": wait["id"]})
+        waiting_rows = fetch_all(
+            conn, "select * from waiting where action_id=:aid order by `rank`", {"aid": record["action_id"]},
+            for_update=True,
+        )
+        if waiting_rows:
+            wait = waiting_rows[0]
+            new_code = str(uuid.uuid4())
+            exec_one(
+                conn,
+                "update records set sign_code=:code, user_id=:uid, borrow=:borrow where ID=:rid",
+                {"code": new_code, "uid": wait["user_id"], "borrow": int(wait["borrow"]), "rid": record_id},
+            )
+            exec_one(
+                conn,
+                "update waiting set `rank` = `rank`-1 where action_id=:aid and `rank`>=:con_rank",
+                {"aid": record["action_id"], "con_rank": 1},
+            )
+            exec_one(conn, "delete from waiting where ID=:id", {"id": wait["id"]})
 
-                if int(record.get("borrow") or 0) == 1 and int(wait.get("borrow") or 0) == 0:
-                    exec_one(conn, "update actions set borrow_num = borrow_num - 1 where ID=:id", {"id": record["action_id"]})
-                if int(wait.get("borrow") or 0) == 1 and int(record.get("borrow") or 0) == 0:
-                    exec_one(conn, "update actions set borrow_num = borrow_num + 1 where ID=:id", {"id": record["action_id"]})
+            if int(record.get("borrow") or 0) == 1 and int(wait.get("borrow") or 0) == 0:
+                exec_one(conn, "update actions set borrow_num = borrow_num - 1 where ID=:id", {"id": record["action_id"]})
+            if int(wait.get("borrow") or 0) == 1 and int(record.get("borrow") or 0) == 0:
+                exec_one(conn, "update actions set borrow_num = borrow_num + 1 where ID=:id", {"id": record["action_id"]})
         else:
             exec_one(conn, "delete from records where ID=:rid", {"rid": record_id})
             if int(record.get("borrow") or 0) == 1:

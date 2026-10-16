@@ -15,6 +15,7 @@ def _fake_tx():
 def test_user_login_not_found(client, monkeypatch):
     monkeypatch.setattr(user_api, "tx", _fake_tx)
     monkeypatch.setattr(user_api, "fetch_one", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(user_api, "reserve_login_request", lambda *_args: True)
 
     r = client.post("/api/user/login", json={"username": "u1", "password": "p1"})
     assert r.status_code == 200
@@ -23,6 +24,8 @@ def test_user_login_not_found(client, monkeypatch):
 
 def test_user_login_success(client, monkeypatch):
     monkeypatch.setattr(user_api, "tx", _fake_tx)
+    monkeypatch.setattr(user_api, "reserve_login_request", lambda *_args: True)
+    monkeypatch.setattr(user_api, "clear_login_account_attempts", lambda *_args: None)
 
     def fake_fetch_one(_conn, sql, _params=None):
         if "from users" in sql:
