@@ -23,7 +23,7 @@ Before opening the admin UI, run `cd python && python -m app.bootstrap_admin` an
 pip install -r requirements.txt
 cp .env.example .env
 # Edit .env — customize APP_NAME, ORG_NAME, etc.
-uvicorn app.main:app --host 0.0.0.0 --port 8081 --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8081 --reload --no-proxy-headers
 ```
 
 ## Configuration
@@ -48,7 +48,7 @@ See `.env.example` for all options. Key settings:
 - Token auth: `Authorization: Bearer <UUID token>` + tokens table + out_time. Query-string tokens are ignored.
 - Passwords: JSON request body; Argon2id for new/changed passwords. Legacy MD5 is upgraded after correct login.
 - Device-only login and new device enrollment are disabled; existing devices can still be revoked. Sign-in codes and registration/contact/profile updates use JSON bodies.
-- Account-recovery routes have database-backed fixed-window limits by direct peer IP and account/code. Reverse proxies can make users share one IP bucket; do not trust `X-Forwarded-For` without a trusted-proxy configuration.
+- Account-recovery routes have database-backed fixed-window limits by direct peer IP and account/code. All bundled launchers disable Uvicorn proxy-header processing so a forwarded header cannot replace the peer address used for limits. Keep `--no-proxy-headers` if starting Uvicorn manually. Behind a reverse proxy, users can share one peer-IP bucket; do not enable proxy headers without an independently reviewed trusted-proxy design.
 - Member and admin login attempts share database-backed fixed-window limits (default: 8/account and 120/direct-peer IP per 900 seconds, configurable through `LOGIN_*` settings). Failed attempts consume quota; a successful login clears the account bucket but not the IP bucket. The same direct-peer limitation applies behind reverse proxies.
 - For an existing MySQL database, run `ALTER TABLE users MODIFY password VARCHAR(255);`, `database/upgrade_recovery_rate_limit.sql`, and `database/upgrade_login_rate_limit.sql` before deploying this version. SQLite initializes both tables automatically. Login fails closed if the new table is missing.
 - The legacy password-column change and rate-limit table migration were smoke-tested against a disposable MySQL 8.0 database; reapplying the table migration was safe, and a synthetic legacy user was preserved. The opt-in test is `tests/integration/test_mysql_recovery.py` and refuses databases not named `club_upgrade_test*`.

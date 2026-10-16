@@ -53,4 +53,4 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 Set-Location $pythonDir
-& $venvPython -m uvicorn app.main:app --app-dir $pythonDir --host 0.0.0.0 --port 8081 --reload
+& $venvPython -m uvicorn app.main:app --app-dir $pythonDir --host 0.0.0.0 --port 8081 --reload --no-proxy-headers

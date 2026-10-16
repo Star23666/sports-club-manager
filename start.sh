@@ -51,4 +51,4 @@ echo "========================================"
 echo ""
 
 cd "$SCRIPT_DIR/python"
-exec "$VENV_PYTHON" -m uvicorn app.main:app --app-dir "$SCRIPT_DIR/python" --host 0.0.0.0 --port 8081 --reload
+exec "$VENV_PYTHON" -m uvicorn app.main:app --app-dir "$SCRIPT_DIR/python" --host 0.0.0.0 --port 8081 --reload --no-proxy-headers

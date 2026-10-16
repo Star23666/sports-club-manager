@@ -234,7 +234,7 @@ Launches MySQL + backend + member portal + admin dashboard.
 ```bash
 # Backend / 后端
 cd python && pip install -r requirements.txt
-uvicorn app.main:app --host 0.0.0.0 --port 8081
+uvicorn app.main:app --host 0.0.0.0 --port 8081 --no-proxy-headers
 
 # Frontend / 前端 (separate terminals / 分开终端)
 cd admin-front-end && npm install && npm run build
