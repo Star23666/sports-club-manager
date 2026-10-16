@@ -279,9 +279,9 @@ Tests cover token verification, login, registration, password validation, utilit
 
 Frontend builds / 前端构建：分别在 `client-front-end` 和 `admin-front-end` 执行 `npm ci && npm run build`；PR 自动检查也会运行这两项。
 
-### 本机演示：跳过登录和注册拼图
+### 本机演示：拼图总开关
 
-仅在本机开发服务器上需要跳过会员登录、注册和管理员登录拼图时，分别进入 `client-front-end`、`admin-front-end`，设置 `VUE_APP_LOCAL_DEMO_NO_PUZZLE=true` 后运行 `npm run serve`。开关还要求开发构建与 `localhost` / `127.0.0.1` 主机名；默认构建、生产构建和其他拼图流程均不受影响。不要将该开关用于公开演示或正式部署。
+拼图默认开启。仅在本机开发服务器上需要跳过全部拼图时，分别进入 `client-front-end`、`admin-front-end`，设置同一个环境变量 `VUE_APP_LOCAL_DEMO_NO_PUZZLE=true` 后运行 `npm run serve`。它统一控制会员登录、注册、报名、转让、找回账号、重置密码、资料修改，以及管理员登录和资料修改等拼图入口，不需要逐页设置。开关还要求开发构建与 `localhost` / `127.0.0.1` 主机名；默认构建和生产构建仍启用拼图。不要将该开关用于公开演示或正式部署。
 
 拼图目前是前端交互步骤，并非服务端的反机器人安全边界；公开部署前仍应依靠服务端限流、审计和其他防护。没有摄像头的电脑可以使用工作人员页面的手动签到码入口，但不能据此宣称已完成真实摄像头扫码验收。
 

@@ -63,6 +63,7 @@
 <script>
 import { showToast } from 'vant';
 import Cookies from "js-cookie";
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 export default {
   setup() {
     const onClickLeft = () => history.back();
@@ -124,7 +125,8 @@ export default {
         });
         return;
       }
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.onSubmitQuery();
+      else this.isShow = true;
     }
   }
 }

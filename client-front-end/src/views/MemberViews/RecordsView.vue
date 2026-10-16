@@ -120,6 +120,7 @@
 import VueQrcode from 'vue-qrcode';
 import {showConfirmDialog, showFailToast, showSuccessToast} from 'vant';
 import Cookies from "js-cookie";
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   components: {VueQrcode},
@@ -256,7 +257,8 @@ export default {
       this.isShow = false;
     },
     send_transfor_first(){
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.send_transfor();
+      else this.isShow = true;
     },
     send_transfor(){
       this.loading = true;

@@ -144,6 +144,7 @@
 import Cookies from "js-cookie";
 import {showSuccessToast, showFailToast, showToast} from "vant";
 import { showConfirmDialog } from 'vant';
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   data(){
@@ -231,7 +232,8 @@ export default {
         showFailToast('两次输入的新密码不一致');
         return;
       }
-      this.isChangePassVerifyShow = true;
+      if (skipPuzzleForLocalDemo()) this.onChangePassClick();
+      else this.isChangePassVerifyShow = true;
     },
     onChangePassClick(){
       this.isChangePassVerifyShow = false;
@@ -336,7 +338,8 @@ export default {
         showFailToast('请输入微信号');
         return;
       }
-      this.isChangeContactVerifyShow = true;
+      if (skipPuzzleForLocalDemo()) this.onChangeContactClick();
+      else this.isChangeContactVerifyShow = true;
     },
     onChangeContactClick(){
       this.loading = true;

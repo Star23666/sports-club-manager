@@ -124,6 +124,7 @@
 <script>
 import Cookies from "js-cookie";
 import { layer } from "@layui/layui-vue";
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   setup(){
@@ -287,15 +288,16 @@ export default {
           return;
         }
         if(this.changeInf.wechat_id === ''){
-          layer.msg('WeChat ID can\'t be empty', {icon: 7, time: 1500});
+          layer.msg('微信号不能为空', {icon: 7, time: 1500});
           return;
         }
         if(this.changeInf.phone === ''){
-          layer.msg('The phone number can\'t be empty', {icon: 7, time: 1500});
+          layer.msg('手机号不能为空', {icon: 7, time: 1500});
           return;
         }
       }
-      this.verifyCodeShow = true;
+      if (skipPuzzleForLocalDemo()) this.onVerifyCodeSuccess();
+      else this.verifyCodeShow = true;
     },
     onEventCall(value){
       if(value === 1){

@@ -50,6 +50,7 @@
 import Cookies from "js-cookie";
 import {showFailToast, showSuccessToast} from "vant";
 import { showConfirmDialog } from 'vant';
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   created(){
@@ -84,7 +85,8 @@ export default {
     },
     onClick(id) {
       this.currentId = id;
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.onSubmit();
+      else this.isShow = true;
     },
     close(){
       this.isShow = false;

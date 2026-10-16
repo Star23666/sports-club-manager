@@ -103,6 +103,7 @@
 
 <script>
 import {showToast, showSuccessToast, showFailToast, showConfirmDialog, showDialog} from 'vant';
+import { skipPuzzleForLocalDemo } from '@/utils/localDemo';
 
 export default {
   setup() {
@@ -225,7 +226,8 @@ export default {
         });
         return;
       }
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.onSubmitQuery();
+      else this.isShow = true;
     },
     onSubmitReset(){
       this.isShow = false;
@@ -292,7 +294,8 @@ export default {
         });
         return;
       }
-      this.isShow = true;
+      if (skipPuzzleForLocalDemo()) this.onSubmitReset();
+      else this.isShow = true;
     },
     sendToStudentEmail(){
       this.isShow = false;
