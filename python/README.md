@@ -34,9 +34,9 @@ See `.env.example` for all options. Key settings:
 |----------|---------|-------------|
 | `DB_TYPE` | `sqlite` | `sqlite` (zero-config) or `mysql` |
 | `SQLITE_PATH` | (empty) | Optional SQLite file path; useful for isolated local tests |
-| `APP_NAME` | `Sports Club Manager` | Displayed in API docs |
-| `ORG_NAME` | `My Sports Club` | Used in emails |
-| `MEMBER_ID_LABEL` | `Student ID` | Label for the member ID field |
+| `APP_NAME` | `体育俱乐部管理系统` | Displayed in API docs |
+| `ORG_NAME` | `体育俱乐部` | Used in emails |
+| `MEMBER_ID_LABEL` | `学号` | Label for the member ID field |
 | `EMAIL_DOMAIN` | (empty) | Domain for auto-generated student emails |
 | `CORS_ORIGINS` | Local client/admin URLs | Comma-separated, exact allowed frontend origins |
 | `LOGIN_ACCOUNT_LIMIT` | `8` | Attempts per username per fixed window, shared by member/admin login |

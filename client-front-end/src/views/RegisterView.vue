@@ -55,14 +55,14 @@
       <van-cell title="个人信息"/>
       <van-field
           v-model="student_name"
-          name="Name"
+          name="姓名"
           label="姓名"
           placeholder="填写真实姓名"
           :rules="[{ required: true, message: '请输入姓名' }]"
       />
       <van-field
           v-model="student_id"
-          name="Student ID"
+          name="学号"
           label="学号"
           placeholder="填写学生证上的学号"
           :rules="[{ required: true, message: '请输入学号' }]"
@@ -81,21 +81,21 @@
       <van-field
           v-model="phone"
           type="tel"
-          name="Phone"
+          name="手机号"
           label="手机号"
           placeholder="请包含区号，如 +86"
           :rules="[{ required: true, message: '请输入手机号' }]"
       />
       <van-field
           v-model="wechat_id"
-          name="Wechat ID"
+          name="微信号"
           label="微信号"
           placeholder="用于活动联系"
           :rules="[{ required: true, message: '请输入微信号' }]"
       />
       <van-field
           v-model="email"
-          name="Email"
+          name="邮箱"
           label="邮箱"
           placeholder="可不填写"
       />

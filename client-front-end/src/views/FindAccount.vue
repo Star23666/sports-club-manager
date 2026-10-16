@@ -26,13 +26,13 @@
       <van-cell title="请填写以下信息以找回用户名"/>
       <van-field
           v-model="student_name"
-          name="Name"
+          name="姓名"
           label="姓名"
           placeholder="填写真实姓名"
       />
       <van-field
           v-model="student_id"
-          name="Student ID"
+          name="学号"
           label="学号"
           placeholder="填写学号"
       />

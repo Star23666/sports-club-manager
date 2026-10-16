@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=str(_env_path), env_file_encoding="utf-8", extra="ignore")
 
     # ── Branding (customize for your club) ──────────────
-    app_name: str = Field(default="Sports Club Manager", validation_alias="APP_NAME")
-    org_name: str = Field(default="My Sports Club", validation_alias="ORG_NAME")
-    member_id_label: str = Field(default="Student ID", validation_alias="MEMBER_ID_LABEL")
+    app_name: str = Field(default="体育俱乐部管理系统", validation_alias="APP_NAME")
+    org_name: str = Field(default="体育俱乐部", validation_alias="ORG_NAME")
+    member_id_label: str = Field(default="学号", validation_alias="MEMBER_ID_LABEL")
     email_domain: str = Field(default="", validation_alias="EMAIL_DOMAIN")  # e.g. "student.university.edu"
 
     # ── Database ────────────────────────────────────────

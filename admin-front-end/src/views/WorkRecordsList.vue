@@ -70,7 +70,7 @@ export default {
         { title:"值班人员姓名", width:"120px", resize:true, key:"staff_name" },
         { title:"值班人员用户名", width:"120px", resize:true, key:"staff_username" },
         { title:"活动名称", width:"220px", resize:true, key:"action_title"},
-        { title:"No. of Rackets", width:"100px", resize:true, key:"borrow_num" },
+        { title:"借用球拍数", width:"100px", resize:true, key:"borrow_num" },
         { title:"地点", width:"160px", resize:true, key:"action_place" },
         { title:"日期", width:"160px", resize:true, key:"action_date"},
         { title:"时间", width:"160px", resize:true, key:"action_time_range"},
