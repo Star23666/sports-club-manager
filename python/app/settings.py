@@ -1,6 +1,7 @@
 from pathlib import Path
+from ipaddress import ip_address
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,6 +40,20 @@ class Settings(BaseSettings):
     login_account_limit: int = Field(default=8, ge=1, validation_alias="LOGIN_ACCOUNT_LIMIT")
     login_ip_limit: int = Field(default=120, ge=1, validation_alias="LOGIN_IP_LIMIT")
     login_window_seconds: int = Field(default=900, ge=1, validation_alias="LOGIN_WINDOW_SECONDS")
+    trusted_proxy_ips: str = Field(default="", validation_alias="TRUSTED_PROXY_IPS")
+
+    @field_validator("trusted_proxy_ips")
+    @classmethod
+    def validate_trusted_proxy_ips(cls, value: str) -> str:
+        # Deliberately accept exact addresses only, never a whole CIDR range.
+        for item in value.split(","):
+            if item.strip():
+                ip_address(item.strip())
+        return value
+
+    @property
+    def trusted_proxy_addresses(self) -> frozenset:
+        return frozenset(ip_address(item.strip()) for item in self.trusted_proxy_ips.split(",") if item.strip())
 
     @property
     def allowed_origins(self) -> list[str]:
