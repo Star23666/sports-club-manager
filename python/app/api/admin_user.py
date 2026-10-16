@@ -8,7 +8,7 @@ from ..db import exec_one, fetch_one, tx
 from ..response import vo
 from ..passwords import hash_password, verify_user_password
 from ..rate_limit import clear_login_account_attempts, reserve_login_request
-from ..utils import PASSWORD_PATTERN
+from ..utils import PASSWORD_PATTERN, contact_validation_error
 from .common import login_common, token_verify_admin
 
 router = APIRouter(prefix="/admin/api/user", tags=["admin-user"])
@@ -69,6 +69,9 @@ def contact(
         correct = fetch_one(conn, "select id, password, state from users where ID=:uid", {"uid": user_view["id"]})
         if not correct or not verify_user_password(conn, correct, origin_pass):
             return vo(1, "Origen Password Error.")
+        error = contact_validation_error(phone, wechat_id, email)
+        if error:
+            return vo(-3, error)
 
         rc = exec_one(
             conn,

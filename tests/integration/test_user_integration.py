@@ -187,6 +187,74 @@ def test_registration_rejects_invalid_server_side_fields(integration_client, ove
         assert conn.exec_driver_sql("select count(*) from users").scalar_one() == 0
 
 
+@pytest.mark.parametrize("role", ["member", "admin"])
+@pytest.mark.parametrize(
+    "override",
+    [
+        {"phone": ""},
+        {"phone": "   "},
+        {"phone": "1" * 101},
+        {"wechat_id": ""},
+        {"wechat_id": "w" * 101},
+        {"email": "bad-email"},
+        {"email": "x" * 90 + "@example.com"},
+    ],
+)
+def test_contact_update_rejects_invalid_fields_without_changing_data(integration_client, role, override):
+    state = 4 if role == "admin" else 2
+    token = f"{role}-contact-token"
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state, phone, wechat_id, email) values (?, ?, ?, ?, ?, ?)",
+            (role, hash_password("Aa1$oldpass"), state, "old-phone", "old-wechat", "old@example.com"),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username=?", (role,)).scalar_one()
+        conn.exec_driver_sql("insert into user_view(ID, username, state) values (?, ?, ?)", (user_id, role, state))
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, token, (datetime.now() + timedelta(hours=1)).isoformat()),
+        )
+
+    payload = {"origin_pass": "Aa1$oldpass", "phone": "new-phone", "wechat_id": "new-wechat", "email": ""}
+    payload.update(override)
+    path = "/admin/api/user/contact" if role == "admin" else "/api/user/contact"
+    response = integration_client.post(path, headers={"Authorization": f"Bearer {token}"}, json=payload)
+    assert response.status_code == 200
+    assert response.json()["status"] == -3
+    with db_module.engine.begin() as conn:
+        assert conn.exec_driver_sql("select phone, wechat_id, email from users where id=?", (user_id,)).one() == (
+            "old-phone", "old-wechat", "old@example.com"
+        )
+
+
+@pytest.mark.parametrize("role", ["member", "admin"])
+def test_contact_update_accepts_valid_fields(integration_client, role):
+    state = 4 if role == "admin" else 2
+    token = f"{role}-contact-token"
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state, phone, wechat_id, email) values (?, ?, ?, ?, ?, ?)",
+            (role, hash_password("Aa1$oldpass"), state, "old-phone", "old-wechat", "old@example.com"),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username=?", (role,)).scalar_one()
+        conn.exec_driver_sql("insert into user_view(ID, username, state) values (?, ?, ?)", (user_id, role, state))
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, token, (datetime.now() + timedelta(hours=1)).isoformat()),
+        )
+
+    path = "/admin/api/user/contact" if role == "admin" else "/api/user/contact"
+    response = integration_client.post(
+        path, headers={"Authorization": f"Bearer {token}"},
+        json={"origin_pass": "Aa1$oldpass", "phone": "new-phone", "wechat_id": "new-wechat", "email": "new@example.technology"},
+    )
+    assert response.json()["status"] == 3
+    with db_module.engine.begin() as conn:
+        assert conn.exec_driver_sql("select phone, wechat_id, email from users where id=?", (user_id,)).one() == (
+            "new-phone", "new-wechat", "new@example.technology"
+        )
+
+
 def test_member_and_admin_share_login_attempt_limit(integration_client, monkeypatch):
     monkeypatch.setattr(settings, "login_account_limit", 2)
     monkeypatch.setattr(settings, "login_ip_limit", 20)

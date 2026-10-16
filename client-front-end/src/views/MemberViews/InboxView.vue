@@ -354,6 +354,10 @@ export default {
       })
           .then(response =>{
             this.loading = false;
+            if(response.data.status === -3){
+              showFailToast(response.data.data || '联系方式格式不正确');
+              return;
+            }
             if(response.data.status <= 0){
               showFailToast('账号状态异常');
             }
