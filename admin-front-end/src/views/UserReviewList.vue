@@ -169,8 +169,9 @@ export default {
         this.query.student_id = this.preQuery.student_id;
         this.loading = true;
       }
-      this.$http.post(`/member/queryReviewMembers?token=${Cookies.get('token')}&name=${encodeURIComponent(this.query.name)}
-&student_id=${encodeURIComponent(this.query.student_id)}&page_size=${this.page.limit}&page_number=${this.page.current}`)
+      this.$http.post(`/member/queryReviewMembers?token=${Cookies.get('token')}&page_size=${this.page.limit}&page_number=${this.page.current}`, {
+        name: this.query.name, student_id: this.query.student_id
+      })
           .then(res => {
             if(res.status !== 200){
               layer.msg('System Error', {icon: 2, time: 1500});
@@ -226,9 +227,12 @@ export default {
         return;
       }
       this.disabled = true;
-      this.$http.post(`/member/updateUserInf?token=${Cookies.get('token')}&id=${this.editUserInf.id}&username=${encodeURIComponent(this.editUserInf.username)}&name=${encodeURIComponent(this.editUserInf.name)}\
-&card_id=${encodeURIComponent(this.editUserInf.card_id)}&phone=${encodeURIComponent(this.editUserInf.phone)}&state=${encodeURIComponent(this.editUserInf.state)}&wechat_id=${encodeURIComponent(this.editUserInf.wechat_id)}\
-&email=${encodeURIComponent(this.editUserInf.email)}&student_id=${encodeURIComponent(this.editUserInf.student_id)}`)
+      this.$http.post(`/member/updateUserInf?token=${Cookies.get('token')}&id=${this.editUserInf.id}`, {
+        username: this.editUserInf.username, name: this.editUserInf.name,
+        card_id: this.editUserInf.card_id, phone: this.editUserInf.phone,
+        state: this.editUserInf.state, wechat_id: this.editUserInf.wechat_id,
+        email: this.editUserInf.email, student_id: this.editUserInf.student_id
+      })
           .then(res => {
             if(res.status === 200){
               if(res.data.status === -2) {

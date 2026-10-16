@@ -91,25 +91,14 @@
       <br/>
     </van-cell-group>
   </van-action-sheet>
-  <van-dialog v-model:show="isAddMyEquipmentShow" title="Enable One-Tap on This Device" @cancel="this.isAddMyEquipmentShow = false"
-              show-cancel-button cancel-button-text="Cancel" confirm-button-text="Confirm" @confirm="submitEquipment">
-    <div style="width: 85%; margin-right: auto; margin-left: auto; margin-top: 5pt; margin-bottom: 0pt; font-size: 10pt; color: #666666">
-      This operation will allow this device to use “One-Tap Fast Login”, which allows to login without password.
-      <b>Do not do this on any untrusted device</b>! To continue, please set a name for this device in following area, within 12 characters.
-    </div>
-    <van-field v-model="name" placeholder="Equipment Name" left-icon="graphic" style="font-size: 12pt; width: 95%; margin-right: auto; margin-left: auto;"/>
-    <div style="width: 85%; margin-right: auto; margin-left: auto; margin-top: 5pt; margin-bottom: 0pt; font-size: 10pt; color: #666666">
-      <van-icon name="warn-o" /> The current operation is a critical operation and requires verification of password!
-    </div>
-    <van-field v-model="password" placeholder="Password" left-icon="lock" style="font-size: 12pt; width: 95%; margin-right: auto; margin-left: auto;" type="password"/>
-  </van-dialog>
-  <van-action-sheet v-model:show="setFastLoginShow" :z-index="100" title="One-Tap Login Management" style="height: 75%;">
+  <van-action-sheet v-model:show="setFastLoginShow" :z-index="100" title="Previous Device Access" style="height: 75%;">
+    <center style="font-size: 10pt; margin: 12pt">Device login is disabled. You can revoke previously registered devices below.</center>
     <van-empty
         v-show="equipments.length === 0"
         style="margin-top: 15pt"
         image="https://fastly.jsdelivr.net/npm/@vant/assets/custom-empty-image.png"
         image-size="80"
-        description="No One-Tap Login Device"
+        description="No previous devices"
     />
     <div class="device-card" v-for="equip in equipments" :style="{ border: equip.is_local ? '4px solid #ccc' : ''}">
       <div class="device-icon">
@@ -122,9 +111,6 @@
         <p style="font-size: 9pt; margin-top: 3pt; margin-bottom: -6pt; color: #666666" v-if="equip.is_local">*this is current equipment</p>
       </div>
     </div>
-    <van-button round block icon="link-o" :disabled="disabled" type="primary" size="small" @click="onAddManageClick"
-                style="width: 75%; max-width: 300px; height: 40px; margin-top: 15pt; margin-left: auto; margin-right: auto" v-show="canAddMyEquipment">Enable One-Tap Login on This Device</van-button>
-    <center style="font-size: 9pt; margin-top: 5pt">Note: Maximum of five devices can be added.<br/><br/></center>
   </van-action-sheet>
   <van-cell-group inset>
     <div style="margin: 20px 20px 0px 20px">
@@ -145,7 +131,7 @@
     <van-cell title="Operations"/>
     <van-cell title="Password Setting"  is-link @click="onChangePassShow"/>
     <van-cell title="Contact Update"  is-link @click="onChangeContactShow"/>
-    <van-cell title="One-Tap Login Management"  is-link @click="onEquipManageShow"/>
+    <van-cell title="Previous Device Access"  is-link @click="onEquipManageShow"/>
     <van-cell title="Log Out" is-link @click="signout"/>
   </van-cell-group>
   <br/>
@@ -156,7 +142,7 @@
 
 <script>
 import Cookies from "js-cookie";
-import {showSuccessToast, showFailToast, showToast, showDialog} from "vant";
+import {showSuccessToast, showFailToast, showToast} from "vant";
 import { showConfirmDialog } from 'vant';
 
 export default {
@@ -181,16 +167,12 @@ export default {
         email: '',
       },
       loading: false,
-      name:'',
-      password: '',
       equipments: [],
       setPasswordShow: false,
       setContactShow: false,
       isChangePassVerifyShow: false,
       isChangeContactVerifyShow: false,
-      isAddMyEquipmentShow: false,
-      setFastLoginShow: false,
-      canAddMyEquipment: true
+      setFastLoginShow: false
     };
   },
   computed: {
@@ -286,7 +268,7 @@ export default {
     },
     deleteEquipment(id, name){
       showConfirmDialog({
-        message: `After removing one-tap access of the equipment “${name}”, it will need to be reauthorized, is it confirmed?`,
+        message: `Remove previous device “${name}” from this account?`,
         confirmButtonText: 'Confirm',
         cancelButtonText: 'Cancel'
       }).then(() =>{
@@ -321,15 +303,11 @@ export default {
         this.$memberVerify();
       else
         this.$staffVerify();
-      this.$http.post('/user/queryEquips?token='+Cookies.get('token')+'&local='+await this.$finger())
+      this.$http.post('/user/queryEquips?token='+Cookies.get('token'), { local: await this.$finger() })
           .then(response => {
             this.loading = false;
             if(response.status === 200 && response.data.status > 0)
               this.equipments = response.data.data;
-            if(response.data.status === 2)
-              this.canAddMyEquipment = false;
-            else
-              this.canAddMyEquipment = true;
             this.setFastLoginShow = true;
           })
           .catch(error =>{
@@ -337,61 +315,6 @@ export default {
             console.log(error);
             showFailToast('Internet Error');
           });
-    },
-    async submitEquipment(){
-      if(this.getByteLength(this.password) === 0){
-        showFailToast('Password cannot be empty');
-        return;
-      }
-      if(this.getByteLength(this.name) > 12){
-        showFailToast('Equipment name is too long');
-        return;
-      }
-      if(this.getByteLength(this.name) === 0){
-        showFailToast('The device name cannot be null');
-        return;
-      }
-      this.loading = true;
-      this.$http.post('/user/newEquipment?token='+Cookies.get('token')+'&equip_id='+await this.$finger()+'&name='+encodeURIComponent(this.name), { password: this.password })
-          .then(response => {
-            this.loading = false;
-            if(response.status !== 200){
-              showFailToast('System Error');
-              return;
-            }
-            if(response.data.status === -2){
-              showFailToast('Wrong password input, validation failed');
-              return;
-            }
-            if(response.data.status === -1){
-              showDialog({
-                message: 'Currently, the device has been bound by another account for one-tap login, it is not allowed to bind more than one account at the same time for one device, please remove it from that account and try again!',
-                confirmButtonText: 'Ok'
-              }).then(() => {});
-              return;
-            }
-            if(response.data.status === 0){
-              showDialog({
-                message: 'The number of devices in the current account has reached the limit, if you want to add new devices, please remove some of the existing devices and try again!',
-                confirmButtonText: 'Ok'
-              }).then(() => {
-                // on close
-              });
-              return;
-            }
-            showSuccessToast('Current device bound successfully');
-            this.onEquipManageShow();
-          })
-          .catch(error =>{
-            this.loading = false;
-            showFailToast('Internet Error');
-            console.log(error);
-          });
-    },
-    onAddManageClick(){
-      this.name = "";
-      this.password = "";
-      this.isAddMyEquipmentShow = true;
     },
     onChangeContactShow(){
       this.changeInf.phone = this.memInf.phone;
@@ -420,7 +343,10 @@ export default {
       this.isChangeContactVerifyShow = false;
       this.isChangePassVerifyShow = false;
       const token = Cookies.get('token');
-      this.$http.post(`/user/contact?token=${token}&email=${encodeURIComponent(this.changeInf.email)}&phone=${encodeURIComponent(this.changeInf.phone)}&wechat_id=${encodeURIComponent(this.changeInf.wechat_id)}`, { origin_pass: this.changeInf.originPass })
+      this.$http.post(`/user/contact?token=${token}`, {
+        origin_pass: this.changeInf.originPass, email: this.changeInf.email,
+        phone: this.changeInf.phone, wechat_id: this.changeInf.wechat_id
+      })
           .then(response =>{
             this.loading = false;
             if(response.data.status <= 0){
@@ -449,18 +375,6 @@ export default {
     close(){
       this.isChangeContactVerifyShow = false;
       this.isChangePassVerifyShow = false;
-    },
-    getByteLength(str) {
-      let len = 0;
-      for (let i = 0; i < str.length; i++) {
-        const code = str.charCodeAt(i);
-        if (code >= 0 && code <= 128) {
-          len += 1;
-        } else {
-          len += 2;
-        }
-      }
-      return len;
     }
   }
 }

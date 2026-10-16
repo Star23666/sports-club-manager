@@ -168,8 +168,11 @@ export default {
         this.isShow = false;
         return;
       }
-      this.$http.post(`/user/register?username=${encodeURIComponent(this.username)}&name=${encodeURIComponent(this.student_name)}&card_id=${encodeURIComponent(this.member_id)}&phone=${encodeURIComponent(this.phone)}&wechat_id=${encodeURIComponent(this.wechat_id)}
-&student_id=${encodeURIComponent(this.student_id)}&email=${encodeURIComponent(this.email)}`, { password: this.password })
+      this.$http.post('/user/register', {
+        username: this.username, password: this.password, name: this.student_name,
+        card_id: this.member_id, phone: this.phone, wechat_id: this.wechat_id,
+        student_id: this.student_id, email: this.email
+      })
           .then(data => {
             console.log(data);
             if(data.status !== 200){

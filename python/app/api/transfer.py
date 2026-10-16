@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 
 from .auth_transport import bearer_token
 
@@ -35,7 +35,7 @@ def query_transfer(token: str = Depends(bearer_token)):
 
 
 @router.post("/transferRecord")
-def transfer_record(token: str = Depends(bearer_token), record_id: int = Query(...), receive_user: str = Query("")):
+def transfer_record(token: str = Depends(bearer_token), record_id: int = Query(...), receive_user: str = Body("", embed=True)):
     with tx() as conn:
         status, user = token_verify_member(conn, token)
         if status <= 0 or not user:

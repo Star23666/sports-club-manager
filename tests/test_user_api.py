@@ -16,7 +16,7 @@ def test_user_login_not_found(client, monkeypatch):
     monkeypatch.setattr(user_api, "tx", _fake_tx)
     monkeypatch.setattr(user_api, "fetch_one", lambda *_args, **_kwargs: None)
 
-    r = client.post("/api/user/login", params={"username": "u1"}, json={"password": "p1"})
+    r = client.post("/api/user/login", json={"username": "u1", "password": "p1"})
     assert r.status_code == 200
     assert r.json() == {"status": -2, "data": None}
 
@@ -36,7 +36,7 @@ def test_user_login_success(client, monkeypatch):
     monkeypatch.setattr(user_api, "verify_user_password", lambda *_args: True)
     monkeypatch.setattr(user_api, "new_token", lambda: "tok-user")
 
-    r = client.post("/api/user/login", params={"username": "u1"}, json={"password": "p1"})
+    r = client.post("/api/user/login", json={"username": "u1", "password": "p1"})
     assert r.status_code == 200
     assert r.json() == {"status": 2, "data": "tok-user"}
     assert called["exec"] == 2
@@ -73,8 +73,9 @@ def test_logout_token_not_found(client, monkeypatch):
 def test_register_invalid_password(client):
     r = client.post(
         "/api/user/register",
-        params={
+        json={
             "username": "u1",
+            "password": "weak",
             "name": "n",
             "card_id": "c",
             "phone": "p",
@@ -82,7 +83,6 @@ def test_register_invalid_password(client):
             "student_id": "s",
             "email": "a@b.com",
         },
-        json={"password": "weak"},
     )
     assert r.status_code == 200
     assert r.json()["status"] == -1

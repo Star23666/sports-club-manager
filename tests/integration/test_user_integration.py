@@ -86,15 +86,14 @@ def test_register_duplicate_then_reject(integration_client):
         "email": "u100@example.com",
     }
 
-    password = params.pop("password")
-    r1 = integration_client.post("/api/user/register", params=params, json={"password": password})
+    r1 = integration_client.post("/api/user/register", json=params)
     assert r1.status_code == 200
     assert r1.json()["status"] == 0
     with db_module.engine.begin() as conn:
         stored = conn.exec_driver_sql("select password from users where username='u100'").scalar_one()
     assert stored.startswith("$argon2id$")
 
-    r2 = integration_client.post("/api/user/register", params=params, json={"password": password})
+    r2 = integration_client.post("/api/user/register", json=params)
     assert r2.status_code == 200
     assert r2.json()["status"] == -1
 
@@ -132,7 +131,7 @@ def test_legacy_member_login_upgrades_password(integration_client):
         )
 
     response = integration_client.post(
-        "/api/user/login", params={"username": "old-member"}, json={"password": "Aa1$oldpass"}
+        "/api/user/login", json={"username": "old-member", "password": "Aa1$oldpass"}
     )
     assert response.json()["status"] == 2
     assert response.json()["data"]
@@ -149,7 +148,7 @@ def test_public_legacy_admin_password_is_rejected(integration_client):
         )
 
     response = integration_client.post(
-        "/admin/api/user/login", params={"username": "admin"}, json={"password": "admin"}
+        "/admin/api/user/login", json={"username": "admin", "password": "admin"}
     )
     assert response.json()["status"] == -2
 
@@ -173,3 +172,59 @@ def test_logout_removes_token(integration_client):
     with db_module.engine.begin() as conn:
         remaining = conn.exec_driver_sql("select count(*) from tokens where token=?", ("tok-logout",)).scalar_one()
     assert remaining == 0
+
+
+@pytest.mark.parametrize(
+    ("state", "path", "expected_status"),
+    [
+        (2, "/admin/api/member/queryMembers", -1),
+        (4, "/api/action/queryRecord", 0),
+    ],
+)
+def test_role_tokens_cannot_cross_member_admin_boundary(integration_client, state, path, expected_status):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            (f"role-{state}", encrypt_md5("Aa1$aaaa"), state),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username=?", (f"role-{state}",)).scalar_one()
+        conn.exec_driver_sql(
+            "insert into user_view(ID, username, state) values (?, ?, ?)",
+            (user_id, f"role-{state}", state),
+        )
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, f"role-token-{state}", None),
+        )
+
+    response = integration_client.post(path, headers={"Authorization": f"Bearer role-token-{state}"})
+    assert response.json()["status"] == expected_status
+
+
+def test_existing_device_fingerprint_cannot_issue_token_or_enroll_new_device(integration_client):
+    with db_module.engine.begin() as conn:
+        conn.exec_driver_sql(
+            "insert into users(username, password, state) values (?, ?, ?)",
+            ("device-owner", encrypt_md5("Aa1$aaaa"), 2),
+        )
+        user_id = conn.exec_driver_sql("select id from users where username='device-owner'").scalar_one()
+        conn.exec_driver_sql(
+            "insert into equipment(name, equip_id, user_id) values (?, ?, ?)",
+            ("old-device", encrypt_md5("known-fingerprint"), user_id),
+        )
+        conn.exec_driver_sql(
+            "insert into tokens(user_id, token, out_time) values (?, ?, ?)",
+            (user_id, "member-token", None),
+        )
+
+    login = integration_client.post("/api/user/loginByEquip", params={"equip_id": "known-fingerprint"})
+    assert login.json()["status"] < 0
+    enroll = integration_client.post(
+        "/api/user/newEquipment",
+        headers={"Authorization": "Bearer member-token"},
+        json={"equip_id": "new-fingerprint", "name": "new-device", "password": "Aa1$aaaa"},
+    )
+    assert enroll.json()["status"] < 0
+    with db_module.engine.begin() as conn:
+        assert conn.exec_driver_sql("select count(*) from tokens").scalar_one() == 1
+        assert conn.exec_driver_sql("select count(*) from equipment").scalar_one() == 1

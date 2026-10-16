@@ -264,8 +264,9 @@ export default {
       this.loading = true;
       this.isShow = false;
       this.buttonDisabled = true;
-      this.$http.post(`transfer/transferRecord?token=${Cookies.get('token')}&record_id=${this.currentId}
-                           &receive_user=${encodeURIComponent(this.username)}`)
+      this.$http.post(`transfer/transferRecord?token=${Cookies.get('token')}&record_id=${this.currentId}`, {
+        receive_user: this.username
+      })
           .then(response => {
             this.loading = false;
             if(response.status !== 200){

@@ -22,8 +22,8 @@ def _user_to_view(row: dict) -> dict:
 @router.post("/queryMembers")
 def query_members(
     token: str = Depends(bearer_token),
-    name: str = Query(""),
-    student_id: str = Query(""),
+    name: str = Body("", embed=True),
+    student_id: str = Body("", embed=True),
     state: int = Query(-1),
     page_size: int = Query(10),
     page_number: int = Query(1),
@@ -65,8 +65,8 @@ def query_members(
 @router.post("/queryReviewMembers")
 def query_review_members(
     token: str = Depends(bearer_token),
-    name: str = Query(""),
-    student_id: str = Query(""),
+    name: str = Body("", embed=True),
+    student_id: str = Body("", embed=True),
     page_size: int = Query(10),
     page_number: int = Query(1),
 ):
@@ -94,8 +94,8 @@ def query_review_members(
 @router.post("/queryUnsignedMembers")
 def query_unsigned_members(
     token: str = Depends(bearer_token),
-    name: str = Query(""),
-    student_id: str = Query(""),
+    name: str = Body("", embed=True),
+    student_id: str = Body("", embed=True),
     page_size: int = Query(10),
     page_number: int = Query(1),
 ):
@@ -125,14 +125,14 @@ def query_unsigned_members(
 def update_user_inf(
     token: str = Depends(bearer_token),
     id: int = Query(...),
-    username: str = Query(""),
-    state: int = Query(...),
-    name: str = Query(""),
-    student_id: str = Query(""),
-    card_id: str = Query(""),
-    phone: str = Query(""),
-    wechat_id: str = Query(""),
-    email: str = Query(""),
+    username: str = Body("", embed=True),
+    state: int = Body(..., embed=True),
+    name: str = Body("", embed=True),
+    student_id: str = Body("", embed=True),
+    card_id: str = Body("", embed=True),
+    phone: str = Body("", embed=True),
+    wechat_id: str = Body("", embed=True),
+    email: str = Body("", embed=True),
 ):
     with tx() as conn:
         ok, admin = token_verify_admin(conn, token)
@@ -284,7 +284,7 @@ def reset_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query
 
 
 @router.post("/queryStaffMembers")
-def query_staff_members(token: str = Depends(bearer_token), name: str = Query(""), select_id: int = Query(-1)):
+def query_staff_members(token: str = Depends(bearer_token), name: str = Body("", embed=True), select_id: int = Query(-1)):
     with tx() as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:

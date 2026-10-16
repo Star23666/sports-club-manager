@@ -85,7 +85,7 @@ export default {
     onSubmitQuery(){
       this.isShow = false;
       this.step = 1;
-      this.$http.post(`/find/queryUserName?student_id=${encodeURIComponent(this.student_id)}&name=${encodeURIComponent(this.student_name)}`)
+      this.$http.post('/find/queryUserName', { student_id: this.student_id, name: this.student_name })
           .then(response =>{
             if(response.status !== 200){
               this.state = -1;
