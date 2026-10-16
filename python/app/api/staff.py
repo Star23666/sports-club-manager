@@ -104,11 +104,20 @@ def stop_action(token: str = Depends(bearer_token), action_id: int = Query(...))
             "update users set unsigned_num = (select count(*) from actions where staff_user_id = :uid and state = 5) where ID = :uid",
             {"uid": user["id"]},
         )
+        newly_restricted = fetch_all(
+            conn,
+            "select ID from users where state = 2 and unsigned_num >= 3 and "
+            "exists(select 1 from records where records.user_id = users.ID and action_id = :aid and records.state = 0)",
+            {"aid": action_id},
+            for_update=True,
+        )
         exec_one(
             conn,
             "update users set state = 1 where state = 2 and unsigned_num >= 3 and exists(select * from records where users.ID = user_id and action_id = :aid and state = 0)",
             {"aid": action_id},
         )
+        for affected in newly_restricted:
+            exec_one(conn, "delete from tokens where user_id=:uid", {"uid": affected["id"]})
         return vo(4, "Successful!")
 
 
