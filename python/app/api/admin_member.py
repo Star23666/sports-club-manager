@@ -134,7 +134,7 @@ def update_user_inf(
     wechat_id: str = Body("", embed=True),
     email: str = Body("", embed=True),
 ):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, admin = token_verify_admin(conn, token)
         if ok <= 0 or not admin:
             return vo(-2, "Login Error")
@@ -146,7 +146,7 @@ def update_user_inf(
         if existing and int(existing.get("id") or 0) != int(id):
             return vo(0, "Username Repeated")
 
-        user = fetch_one(conn, "select * from users where ID=:id", {"id": id})
+        user = fetch_one(conn, "select * from users where ID=:id", {"id": id}, for_update=True)
         if not user:
             return vo(1, "User Not Exist")
 
@@ -178,6 +178,8 @@ def update_user_inf(
                     "student_id": student_id,
             },
         )
+        if int(user.get("state") or 0) != int(state):
+            exec_one(conn, "delete from tokens where user_id=:uid", {"uid": id})
         return vo(3, "Successfully")
 
 
@@ -228,27 +230,28 @@ def delete_user(token: str = Depends(bearer_token), user_id: int = Query(...)):
 
 @router.post("/passUser")
 def pass_user(token: str = Depends(bearer_token), user_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id})
+        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id}, for_update=True)
         if not user or int(user.get("state") or 0) > 0:
             return vo(0, "User Not Exist")
 
         exec_one(conn, "update users set state = 2 where ID=:id", {"id": user_id})
+        exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user_id})
         return vo(1, "Successfully")
 
 
 @router.post("/clearUserUnsigned")
 def clear_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id})
+        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id}, for_update=True)
         if not user:
             return vo(0, "User Not Exist")
 
@@ -257,17 +260,19 @@ def clear_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query
 
         u = exec_one(conn, "update users set unsigned_num=:num where id=:uid", {"num": 0, "uid": user_id})
         exec_one(conn, "update users set state = 2 where ID=:id", {"id": user_id})
+        if int(user.get("state") or 0) != 2:
+            exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user_id})
         return vo(2, f"Successfully:{bool(u)}")
 
 
 @router.post("/resetUserUnsigned")
 def reset_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query(...)):
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, _admin = token_verify_admin(conn, token)
         if ok <= 0:
             return vo(-2, "Login Error")
 
-        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id})
+        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id}, for_update=True)
         if not user:
             return vo(0, "User Not Exist")
 
@@ -279,8 +284,11 @@ def reset_user_unsigned(token: str = Depends(bearer_token), user_id: int = Query
             "select count(*) as c from records, actions where records.user_id = :uid and records.state = 0 and records.action_id = actions.ID and actions.state = 5",
             {"uid": user_id},
         )
-        u = exec_one(conn, "update users set unsigned_num=:num where id=:uid", {"num": int(num["c"]) if num else 0, "uid": user_id})
+        unsigned_count = int(num["c"]) if num else 0
+        u = exec_one(conn, "update users set unsigned_num=:num where id=:uid", {"num": unsigned_count, "uid": user_id})
         exec_one(conn, "update users set state = 1 where ID = :uid and unsigned_num >= 3", {"uid": user_id})
+        if unsigned_count >= 3 and int(user.get("state") or 0) != 1:
+            exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user_id})
         return vo(2, f"Successfully1:{bool(u)}")
 
 

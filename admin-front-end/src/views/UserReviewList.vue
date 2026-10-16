@@ -256,11 +256,12 @@ export default {
                 layer.msg('该账号已删除，请刷新页面后重试',{icon: 7, time: 1500});
                 return;
               }
+              const stateChanged = Number(this.dataSource[this.currentIndex].state) !== Number(this.editUserInf.state);
               this.dataSource[this.currentIndex] = JSON.parse(JSON.stringify(this.editUserInf));
               this.computedStatusName(this.dataSource[this.currentIndex]);
               this.disabled = false;
               this.editUserShow = false;
-              layer.msg('更新成功',{icon: 1, time: 1500});
+              layer.msg(stateChanged ? '更新成功，状态变化后该用户需重新登录' : '更新成功',{icon: 1, time: 1500});
             }else{
               layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
             }
@@ -341,7 +342,7 @@ export default {
               this.computedStatusName(this.dataSource[this.currentIndex]);
               this.disabled = false;
               this.changePasswordShow = false;
-              layer.msg('账号审核已通过',{icon: 1, time: 1500});
+              layer.msg('账号审核已通过，用户需重新登录',{icon: 1, time: 1500});
               if(this.dataSource.length === 1 && this.page.current > 1){
                 this.page.current = this.page.current - 1;
               }
