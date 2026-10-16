@@ -186,7 +186,7 @@ def update_user_password(token: str = Depends(bearer_token), user_id: int = Quer
     if not PASSWORD_PATTERN.match(password):
         return vo(-2, "Password Invalid!")
 
-    with tx() as conn:
+    with tx(immediate=True) as conn:
         ok, admin = token_verify_admin(conn, token)
         if ok <= 0 or not admin:
             return vo(-2, "Login Error")
@@ -194,11 +194,12 @@ def update_user_password(token: str = Depends(bearer_token), user_id: int = Quer
         if int(admin["id"]) == int(user_id):
             return vo(-1, "Banned Update Myself")
 
-        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id})
+        user = fetch_one(conn, "select * from users where ID=:id", {"id": user_id}, for_update=True)
         if not user:
             return vo(0, "User Not Exist")
 
         exec_one(conn, "update users set password=:pwd where ID=:id", {"pwd": hash_password(password), "id": user_id})
+        exec_one(conn, "delete from tokens where user_id=:uid", {"uid": user_id})
         return vo(1, "Successfully")
 
 

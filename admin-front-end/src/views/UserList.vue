@@ -389,7 +389,7 @@ export default {
               }
               this.disabled = false;
               this.changePasswordShow = false;
-              layer.msg('密码修改成功',{icon: 1, time: 1500});
+              layer.msg('密码修改成功，该用户需重新登录',{icon: 1, time: 1500});
             }else{
               layer.msg('系统异常，请稍后重试',{icon: 1, time: 1500});
             }
